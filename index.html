@@ -1,0 +1,1936 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="apple-mobile-web-app-title" content="せきがえ君">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" href="icon.png">
+<title>せきがえ君</title>
+<style>
+:root{
+  --paper:#FFF9F0; --card:#FFFFFF; --ink:#463A2F; --muted:#95836F;
+  --line:#EADDC9; --line2:#D9C9AF;
+  --red:#F1595C; --red-deep:#D9464A; --red-soft:#FFE7E4;
+  --sky:#3E97D4; --sky-soft:#E0F1FC;
+  --pink:#F06E9C; --pink-soft:#FFE6EF;
+  --sun:#FFB931; --sun-soft:#FFF3D6;
+  --mint:#43B08A; --mint-soft:#E0F5EC;
+  --board:#3E6B57; --board-ink:#EAF5EF;
+  --shadow:0 2px 0 rgba(70,58,47,.10);
+  --radius:14px;
+  --ok:#2E9E77; --warn:#E8A020; --bad:#D9464A;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --paper:#241D14; --card:#31281B; --ink:#F5ECDD; --muted:#B5A48D;
+    --line:#4A3E2C; --line2:#5C4E38;
+    --red:#F1595C; --red-deep:#E4676A; --red-soft:#4E2A26;
+    --sky:#5FAEE3; --sky-soft:#26384A;
+    --pink:#F587AE; --pink-soft:#4A2C38;
+    --sun:#FFC24B; --sun-soft:#4A3C1E;
+    --mint:#57C29C; --mint-soft:#24413A;
+    --board:#31543F; --board-ink:#DDEEE4;
+    --shadow:0 2px 0 rgba(0,0,0,.25);
+  }
+}
+:root[data-theme="light"]{
+  --paper:#FFF9F0; --card:#FFFFFF; --ink:#463A2F; --muted:#95836F;
+  --line:#EADDC9; --line2:#D9C9AF;
+  --red:#F1595C; --red-deep:#D9464A; --red-soft:#FFE7E4;
+  --sky:#3E97D4; --sky-soft:#E0F1FC;
+  --pink:#F06E9C; --pink-soft:#FFE6EF;
+  --sun:#FFB931; --sun-soft:#FFF3D6;
+  --mint:#43B08A; --mint-soft:#E0F5EC;
+  --board:#3E6B57; --board-ink:#EAF5EF;
+  --shadow:0 2px 0 rgba(70,58,47,.10);
+}
+:root[data-theme="dark"]{
+  --paper:#241D14; --card:#31281B; --ink:#F5ECDD; --muted:#B5A48D;
+  --line:#4A3E2C; --line2:#5C4E38;
+  --red:#F1595C; --red-deep:#E4676A; --red-soft:#4E2A26;
+  --sky:#5FAEE3; --sky-soft:#26384A;
+  --pink:#F587AE; --pink-soft:#4A2C38;
+  --sun:#FFC24B; --sun-soft:#4A3C1E;
+  --mint:#57C29C; --mint-soft:#24413A;
+  --board:#31543F; --board-ink:#DDEEE4;
+  --shadow:0 2px 0 rgba(0,0,0,.25);
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--paper); color:var(--ink);
+  font-family:"Hiragino Maru Gothic ProN","HiraMaruProN-W4","Zen Maru Gothic","BIZ UDGothic","Yu Gothic UI","Meiryo",system-ui,sans-serif;
+  font-size:16px; line-height:1.55;
+  min-height:100vh;
+  touch-action:manipulation;
+}
+.g-low body, :root.g-low body{font-size:17px;}
+button{font-family:inherit; color:inherit;}
+input,select,textarea{
+  font-family:inherit; font-size:1em; color:var(--ink);
+  background:var(--card); border:2px solid var(--line2); border-radius:10px;
+  padding:8px 10px;
+}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:3px solid var(--sky); outline-offset:1px;}
+
+/* ---------- app bar ---------- */
+.appbar{
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  padding:10px 14px 6px;
+}
+.logo{display:flex; align-items:center; gap:8px;}
+#mascot{width:38px; height:38px; object-fit:contain; flex:0 0 auto;}
+.logo .ttl{font-size:22px; font-weight:800; letter-spacing:.04em;}
+.logo .sub{font-size:12px; color:var(--muted); letter-spacing:.08em;}
+.appbar .sp{flex:1;}
+.gradeSwitch{display:flex; border:2px solid var(--line2); border-radius:999px; overflow:hidden; background:var(--card);}
+.gradeSwitch button{
+  border:0; background:transparent; padding:6px 14px; font-size:13px; font-weight:700; cursor:pointer; color:var(--muted);
+}
+.gradeSwitch button.on{background:var(--red); color:#fff;}
+.iconbtn{
+  border:2px solid var(--line2); background:var(--card); border-radius:999px;
+  padding:6px 12px; font-size:13px; font-weight:700; cursor:pointer; box-shadow:var(--shadow);
+}
+
+/* ---------- tabs ---------- */
+.tabs{
+  display:flex; gap:6px; padding:6px 14px 0; overflow-x:auto;
+  border-bottom:3px solid var(--line);
+  scrollbar-width:none;
+}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{
+  flex:0 0 auto; border:3px solid var(--line); border-bottom:none;
+  border-radius:14px 14px 0 0; background:var(--card);
+  padding:9px 16px 7px; font-size:15px; font-weight:800; cursor:pointer;
+  color:var(--muted); position:relative; top:3px;
+}
+.tab .tico{margin-right:4px;}
+.tab.on{color:var(--ink); border-color:var(--line2); background:var(--paper); top:0; padding-bottom:10px;}
+main{padding:16px 14px 60px; max-width:1080px; margin:0 auto;}
+section.pane{display:none;}
+section.pane.on{display:block;}
+h2.ph{font-size:19px; font-weight:800; margin:4px 0 4px;}
+p.pd{margin:0 0 14px; color:var(--muted); font-size:13.5px;}
+
+/* ---------- buttons ---------- */
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:6px;
+  border:0; border-radius:999px; cursor:pointer;
+  font-weight:800; font-size:15px; padding:11px 20px;
+  background:var(--card); color:var(--ink);
+  box-shadow:0 3px 0 var(--line2); border:2px solid var(--line2);
+}
+.btn:active{transform:translateY(2px); box-shadow:0 1px 0 var(--line2);}
+.btn.primary{background:var(--red); border-color:var(--red-deep); color:#fff; box-shadow:0 3px 0 var(--red-deep);}
+.btn.primary:active{box-shadow:0 1px 0 var(--red-deep);}
+.btn.blue{background:var(--sky); border-color:#2E7CB4; color:#fff; box-shadow:0 3px 0 #2E7CB4;}
+.btn.green{background:var(--mint); border-color:#2E8A6B; color:#fff; box-shadow:0 3px 0 #2E8A6B;}
+.btn.big{font-size:19px; padding:15px 30px;}
+.btn.sm{font-size:13px; padding:7px 14px;}
+.btn[disabled]{opacity:.45; pointer-events:none;}
+.seg{display:inline-flex; border:2px solid var(--line2); border-radius:999px; background:var(--card); overflow:hidden; flex-wrap:nowrap;}
+.seg button{border:0; background:transparent; padding:9px 15px; font-size:14px; font-weight:700; color:var(--muted); cursor:pointer; white-space:nowrap;}
+.seg button.on{background:var(--sun); color:#5A430E;}
+.row{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:10px 0;}
+.card{
+  background:var(--card); border:2px solid var(--line); border-radius:var(--radius);
+  padding:14px; box-shadow:var(--shadow); margin:0 0 14px;
+}
+.card h3{margin:0 0 8px; font-size:15.5px;}
+.hint{font-size:12.5px; color:var(--muted);}
+.badge{display:inline-block; border-radius:999px; padding:2px 10px; font-size:12px; font-weight:800;}
+.badge.b-boy{background:var(--sky-soft); color:var(--sky);}
+.badge.b-girl{background:var(--pink-soft); color:var(--pink);}
+
+/* ---------- roster ---------- */
+.rosterList{display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:8px;}
+.stuRow{
+  display:flex; align-items:center; gap:8px;
+  background:var(--card); border:2px solid var(--line); border-radius:12px; padding:7px 10px;
+}
+.stuRow .nm{flex:1; font-weight:800; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.gtoggle{display:flex; border-radius:999px; overflow:hidden; border:2px solid var(--line);}
+.gtoggle button{border:0; background:transparent; font-size:12px; font-weight:800; padding:4px 9px; cursor:pointer; color:var(--muted);}
+.gtoggle button.onM{background:var(--sky); color:#fff;}
+.gtoggle button.onF{background:var(--pink); color:#fff;}
+.xbtn{border:0; background:transparent; color:var(--muted); font-size:17px; cursor:pointer; padding:2px 6px;}
+.xbtn:hover{color:var(--bad);}
+
+/* ---------- seat chart ---------- */
+.boardBar{
+  background:var(--board); color:var(--board-ink);
+  border-radius:10px; text-align:center; font-weight:800; letter-spacing:.35em;
+  padding:7px 0 8px; margin:0 auto 12px; font-size:14px;
+  border:3px solid rgba(0,0,0,.18); box-shadow:var(--shadow);
+}
+.chartWrap{overflow-x:auto; padding-bottom:6px;}
+.grid{display:grid; gap:8px; margin:0 auto;}
+.seat{
+  position:relative; border:2.5px solid var(--line2); border-radius:12px;
+  background:var(--card); box-shadow:var(--shadow);
+  min-height:58px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:4px 3px; overflow:hidden;
+}
+.seat .no{position:absolute; top:2px; left:6px; font-size:10.5px; color:var(--muted); font-weight:700; font-variant-numeric:tabular-nums;}
+.seat .gmark{position:absolute; top:2px; right:5px; font-size:10.5px; font-weight:800;}
+.seat .tmark{position:absolute; bottom:2px; right:5px; font-size:10px; font-weight:800; opacity:.85;}
+.seat .nm{font-weight:800; font-size:15px; text-align:center; line-height:1.25; word-break:break-all;}
+.seat .nm.empty{color:var(--line2); font-weight:700;}
+.seat.gM{background:var(--sky-soft);}
+.seat.gF{background:var(--pink-soft);}
+.seat.fixed .no{color:var(--red);}
+.seat.fixed{border-style:double; border-width:4px;}
+.seat.off{opacity:0; pointer-events:none;}
+.seat.offEdit{opacity:1; pointer-events:auto; border-style:dashed; background:transparent; box-shadow:none;}
+.seat.offEdit .nm{color:var(--line2);}
+.seat.pop{animation:pop .45s cubic-bezier(.2,1.6,.4,1) both;}
+@keyframes pop{0%{transform:scale(.2) rotate(-6deg); opacity:0;} 100%{transform:scale(1) rotate(0); opacity:1;}}
+.seat.tappable{cursor:pointer;}
+.seat.tappable:active{transform:scale(.96);}
+/* team tints via inline style; tmark shows 班 */
+
+/* big reveal chart */
+.revealChart .seat{min-height:72px;}
+.revealChart .seat .nm{font-size:19px;}
+
+/* ---------- editor controls ---------- */
+.stepper{display:inline-flex; align-items:center; gap:0; border:2px solid var(--line2); border-radius:999px; background:var(--card); overflow:hidden;}
+.stepper button{border:0; background:transparent; font-size:19px; font-weight:800; width:42px; height:38px; cursor:pointer; color:var(--red);}
+.stepper .val{min-width:34px; text-align:center; font-weight:800; font-variant-numeric:tabular-nums;}
+.teamChips{display:flex; gap:6px; flex-wrap:wrap;}
+.teamChip{
+  border:2.5px solid transparent; border-radius:999px; padding:6px 13px;
+  font-size:13px; font-weight:800; cursor:pointer; background:var(--card); box-shadow:var(--shadow);
+}
+.teamChip.on{border-color:var(--ink);}
+
+/* ---------- constraints ---------- */
+.consList{display:flex; flex-direction:column; gap:8px;}
+.consRow{
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  background:var(--card); border:2px solid var(--line); border-radius:12px; padding:8px 12px;
+}
+.consRow .desc{flex:1; font-weight:700; font-size:14px; min-width:180px;}
+
+/* ---------- shuffle pane ---------- */
+.statusLine{display:flex; gap:14px; flex-wrap:wrap; font-size:13.5px; font-weight:700;}
+.statusLine .okc{color:var(--ok);} .statusLine .badc{color:var(--bad);}
+.drawChips{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;}
+.drawChip{
+  border:2.5px solid var(--line2); background:var(--card); border-radius:999px;
+  padding:9px 16px; font-size:15px; font-weight:800; cursor:pointer; box-shadow:var(--shadow);
+}
+.drawChip:active{transform:scale(.95);}
+.drawChip.done{background:var(--mint-soft); border-color:var(--mint); color:var(--ink); cursor:default;}
+.drawChip.done .num{color:var(--mint); font-variant-numeric:tabular-nums;}
+
+/* ---------- overlay stage ---------- */
+.overlay{
+  position:fixed; inset:0; z-index:50; display:none;
+  background:var(--paper);
+  overflow:auto;
+}
+.overlay.on{display:flex;}
+/* margin:auto = safe centering: centers when content fits, top-aligns + scrolls when it doesn't */
+.stageInner{
+  margin:auto; display:flex; flex-direction:column; align-items:center;
+  padding:56px 14px 30px; width:100%;
+}
+.overlay .stageTitle{font-size:22px; font-weight:800; margin:0 0 6px; text-align:center; text-wrap:balance;}
+.overlay .stageSub{font-size:14px; color:var(--muted); margin:0 0 16px; text-align:center;}
+.stageArea{
+  width:min(560px,92vw); min-height:300px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;
+}
+.resultNum{
+  font-size:min(120px,24vw); font-weight:800; color:var(--red);
+  font-variant-numeric:tabular-nums; line-height:1;
+  animation:pop .5s cubic-bezier(.2,1.6,.4,1) both;
+}
+.resultName{font-size:24px; font-weight:800; text-align:center;}
+.stageBtns{display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin-top:18px;}
+.closeX{
+  position:fixed; top:14px; right:16px; z-index:55; border:2px solid var(--line2); background:var(--card);
+  border-radius:999px; width:42px; height:42px; font-size:18px; font-weight:800; cursor:pointer; color:var(--muted);
+  box-shadow:var(--shadow);
+}
+
+/* garapon */
+.gara{position:relative; width:220px; height:250px;}
+.garaDrum{
+  width:190px; height:190px; margin:0 auto; border-radius:26px;
+  background:var(--sun); border:5px solid #C88A16;
+  display:flex; align-items:center; justify-content:center;
+  transform:rotate(0deg);
+}
+.garaDrum.spin{animation:garaSpin 1.6s cubic-bezier(.4,.1,.4,1) both;}
+@keyframes garaSpin{0%{transform:rotate(0)} 100%{transform:rotate(1080deg)}}
+.garaDrum .win{width:90px; height:90px; border-radius:50%; background:var(--card); border:4px solid #C88A16; display:flex; align-items:center; justify-content:center; font-size:34px;}
+.garaBall{
+  position:absolute; left:50%; bottom:-6px; transform:translateX(-50%) scale(0);
+  width:64px; height:64px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:26px; font-weight:800; color:#fff;
+  border:4px solid rgba(0,0,0,.15);
+}
+.garaBall.out{animation:ballOut .8s cubic-bezier(.2,1.5,.4,1) both;}
+@keyframes ballOut{
+  0%{transform:translateX(-50%) translateY(-40px) scale(.1);}
+  60%{transform:translateX(-50%) translateY(14px) scale(1.08);}
+  100%{transform:translateX(-50%) translateY(0) scale(1);}
+}
+/* omikuji */
+.miku{position:relative; width:150px; height:260px; display:flex; flex-direction:column; align-items:center;}
+.mikuBox{
+  width:110px; height:170px; border-radius:14px 14px 20px 20px;
+  background:var(--red); border:4px solid var(--red-deep);
+  display:flex; align-items:flex-end; justify-content:center; padding-bottom:14px;
+  color:#fff; font-weight:800; font-size:20px; writing-mode:vertical-rl; letter-spacing:.3em;
+}
+.miku.shake .mikuBox{animation:mikuShake 1.3s ease-in-out both;}
+@keyframes mikuShake{
+  0%,100%{transform:rotate(0)} 10%{transform:rotate(-14deg)} 25%{transform:rotate(12deg)}
+  40%{transform:rotate(-12deg)} 55%{transform:rotate(10deg)} 70%{transform:rotate(-8deg)} 85%{transform:rotate(6deg)}
+}
+.mikuStick{
+  position:absolute; top:6px; left:50%; transform:translate(-50%,80px);
+  width:34px; height:120px; background:#F3E3C2; border:3px solid #C9A96A; border-radius:8px;
+  display:flex; align-items:center; justify-content:center;
+  font-weight:800; font-size:20px; color:#7A5A1E; z-index:-1;
+  font-variant-numeric:tabular-nums;
+}
+.miku.outStick .mikuStick{animation:stickOut .7s cubic-bezier(.2,1.4,.4,1) both; z-index:1;}
+@keyframes stickOut{0%{transform:translate(-50%,80px);}100%{transform:translate(-50%,-64px);}}
+/* roulette */
+.rouWrap{position:relative; width:240px; height:260px;}
+.rouArrow{position:absolute; top:0; left:50%; transform:translateX(-50%); z-index:2;
+  width:0; height:0; border-left:14px solid transparent; border-right:14px solid transparent; border-top:22px solid var(--ink);}
+.rouWheel{position:absolute; top:16px; left:50%; transform:translateX(-50%);
+  width:220px; height:220px; border-radius:50%; border:6px solid var(--ink);
+  background:conic-gradient(var(--red) 0 45deg, var(--sun) 45deg 90deg, var(--sky) 90deg 135deg, var(--mint) 135deg 180deg,
+    var(--pink) 180deg 225deg, var(--grape,#8F6FD0) 225deg 270deg, var(--red) 270deg 315deg, var(--sun) 315deg 360deg);
+}
+.rouCenter{position:absolute; top:16px; left:50%; transform:translateX(-50%);
+  width:220px; height:220px; display:flex; align-items:center; justify-content:center; z-index:1;}
+.rouCenter .n{background:var(--card); border:4px solid var(--ink); border-radius:50%;
+  width:110px; height:110px; display:flex; align-items:center; justify-content:center;
+  font-size:44px; font-weight:800; font-variant-numeric:tabular-nums;}
+/* simple */
+.simpleBox{font-size:60px; font-weight:800; font-variant-numeric:tabular-nums; color:var(--muted);}
+
+/* ---------- history ---------- */
+.histList{display:flex; flex-direction:column; gap:8px;}
+.histRow{
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  background:var(--card); border:2px solid var(--line); border-radius:12px; padding:10px 14px;
+}
+.histRow .dt{font-weight:800; font-variant-numeric:tabular-nums;}
+.histRow .meta{color:var(--muted); font-size:13px; flex:1;}
+.histRow .thumb{
+  width:92px; height:69px; object-fit:cover; border-radius:8px;
+  border:2px solid var(--line); cursor:pointer; background:#FFF9F0;
+}
+
+/* ---------- toast ---------- */
+#toast{
+  position:fixed; left:50%; bottom:24px; transform:translateX(-50%) translateY(80px);
+  background:var(--ink); color:var(--paper); border-radius:999px;
+  padding:10px 22px; font-weight:800; font-size:14px; z-index:99;
+  transition:transform .25s ease; max-width:90vw; text-align:center;
+}
+#toast.on{transform:translateX(-50%) translateY(0);}
+
+/* ---------- modal ---------- */
+.modalBack{position:fixed; inset:0; background:rgba(40,30,20,.45); z-index:60; display:none; align-items:center; justify-content:center; padding:16px;}
+.modalBack.on{display:flex;}
+.modal{
+  background:var(--paper); border:3px solid var(--line2); border-radius:18px;
+  padding:18px; width:min(640px,94vw); max-height:86vh; overflow:auto;
+}
+.modal h3{margin:0 0 10px; font-size:17px;}
+.pickerList{display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:8px;}
+.pickBtn{border:2px solid var(--line2); background:var(--card); border-radius:10px; padding:9px 6px; font-weight:800; cursor:pointer; font-size:14px;}
+.pickBtn:active{transform:scale(.95);}
+
+/* ---------- help ---------- */
+.helpSec{
+  background:var(--card); border:2px solid var(--line); border-radius:var(--radius);
+  box-shadow:var(--shadow); margin:0 0 10px; overflow:hidden;
+}
+.helpSec summary{
+  list-style:none; cursor:pointer; font-weight:800; font-size:15px;
+  padding:13px 16px; -webkit-user-select:none; user-select:none;
+}
+.helpSec summary::-webkit-details-marker{display:none;}
+.helpSec[open] summary{border-bottom:2px dashed var(--line);}
+.helpBody{padding:12px 18px 14px; font-size:14px;}
+.helpBody p{margin:8px 0;}
+.helpBody ol,.helpBody ul{margin:8px 0; padding-left:1.4em;}
+.helpBody li{margin:6px 0;}
+.helpBody b{color:var(--red-deep);}
+
+.confetti{position:fixed; width:10px; height:16px; z-index:80; pointer-events:none; top:-20px;}
+@keyframes confFall{0%{transform:translateY(-5vh) rotate(0);}100%{transform:translateY(110vh) rotate(720deg);}}
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:.01s !important; transition-duration:.01s !important;}
+}
+@media (max-width:640px){
+  .logo .ttl{font-size:18px;}
+  .seat .nm{font-size:13px;}
+}
+</style>
+<header class="appbar">
+  <div class="logo">
+    <img id="mascot" src="mascot.png" alt="" onerror="this.remove()">
+    <span class="ttl" id="appTitle">せきがえ君</span><span class="sub">SEKIGAE-KUN</span>
+  </div>
+  <button class="iconbtn" id="classBtn">🏫</button>
+  <div class="sp"></div>
+  <div class="gradeSwitch" role="group" aria-label="学年モード">
+    <button id="gLow">低学年</button><button id="gHigh">高学年</button>
+  </div>
+  <button class="iconbtn" id="sndBtn">🔊</button>
+  <button class="iconbtn" id="bgmBtn">🎵</button>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button class="tab" data-pane="roster"><span class="tico">👦</span><span class="tt" data-k="tabRoster">めいぼ</span></button>
+  <button class="tab" data-pane="layout"><span class="tico">🪑</span><span class="tt" data-k="tabLayout">ざせき</span></button>
+  <button class="tab" data-pane="rules"><span class="tico">🤝</span><span class="tt" data-k="tabRules">やくそく</span></button>
+  <button class="tab on" data-pane="shuffle"><span class="tico">🎰</span><span class="tt" data-k="tabShuffle">せきがえ</span></button>
+  <button class="tab" data-pane="omake"><span class="tico">🎯</span><span class="tt" data-k="tabOmake">くじびき</span></button>
+  <button class="tab" data-pane="history"><span class="tico">📚</span><span class="tt" data-k="tabHistory">きろく</span></button>
+  <button class="tab" data-pane="settings"><span class="tico">⚙️</span><span class="tt" data-k="tabSettings">せってい</span></button>
+  <button class="tab" data-pane="help"><span class="tico">📖</span><span class="tt" data-k="tabHelp">つかいかた</span></button>
+</nav>
+
+<main>
+  <!-- ============ 名簿 ============ -->
+  <section class="pane" id="pane-roster">
+    <h2 class="ph" data-k="rosterH">めいぼ</h2>
+    <p class="pd" data-k="rosterD">クラスのみんなの名前と性別を登録します(最大45人)。</p>
+    <div class="card">
+      <div class="row">
+        <input type="text" id="newName" placeholder="名前" style="flex:1; min-width:150px;" maxlength="12">
+        <div class="seg" id="newGender">
+          <button data-g="M" class="on">男子</button><button data-g="F">女子</button>
+        </div>
+        <button class="btn primary" id="addStu" data-k="add">ついか</button>
+      </div>
+      <div class="row">
+        <button class="btn sm" id="bulkOpen" data-k="bulk">まとめて登録(コピペ)</button>
+        <button class="btn sm" id="rosterClear" data-k="rosterClear">めいぼを全部けす</button>
+        <span class="hint" id="rosterCount"></span>
+      </div>
+    </div>
+    <div class="rosterList" id="rosterList"></div>
+  </section>
+
+  <!-- ============ 座席 ============ -->
+  <section class="pane" id="pane-layout">
+    <h2 class="ph" data-k="layoutH">ざせきの形</h2>
+    <p class="pd" data-k="layoutD">教室に合わせて席を作ります。編集モードを選んで席をタップ!</p>
+    <div class="card">
+      <div class="row">
+        <span data-k="rows">たて</span>
+        <span class="stepper"><button id="rowMinus">−</button><span class="val" id="rowVal">5</span><button id="rowPlus">+</button></span>
+        <span data-k="cols">よこ</span>
+        <span class="stepper"><button id="colMinus">−</button><span class="val" id="colVal">6</span><button id="colPlus">+</button></span>
+        <span class="hint" id="seatCount"></span>
+      </div>
+      <div class="row">
+        <div class="seg" id="editMode">
+          <button data-m="onoff" class="on" data-k="emOnoff">席あり/なし</button>
+          <button data-m="fixed" data-k="emFixed">指定席</button>
+          <button data-m="gender" data-k="emGender">男女</button>
+          <button data-m="team" data-k="emTeam">班</button>
+        </div>
+      </div>
+      <div class="row" id="teamRow" style="display:none;">
+        <div class="teamChips" id="teamChips"></div>
+      </div>
+      <p class="hint" id="editHint"></p>
+    </div>
+    <div class="boardBar" data-k="board">こくばん</div>
+    <div class="chartWrap"><div class="grid" id="editGrid"></div></div>
+  </section>
+
+  <!-- ============ 条件 ============ -->
+  <section class="pane" id="pane-rules">
+    <h2 class="ph" data-k="rulesH">はいちのやくそく</h2>
+    <p class="pd" data-k="rulesD">「この子とこの子は離す」などの配慮を設定します。指定席・男女席は「ざせき」タブで。</p>
+    <div class="card">
+      <h3 data-k="rulesAdd">離すペアを追加</h3>
+      <div class="row">
+        <select id="consA"></select>
+        <span data-k="and">と</span>
+        <select id="consB"></select>
+      </div>
+      <div class="row">
+        <div class="seg" id="consType">
+          <button data-t="adj" class="on" data-k="ctAdj">となりにしない(周囲1マス)</button>
+          <button data-t="dist" data-k="ctDist">距離を指定</button>
+        </div>
+      </div>
+      <div class="row" id="distRow" style="display:none;">
+        <span data-k="vgap">たてに</span>
+        <span class="stepper"><button id="vgMinus">−</button><span class="val" id="vgVal">2</span><button id="vgPlus">+</button></span>
+        <span data-k="hgap">よこに</span>
+        <span class="stepper"><button id="hgMinus">−</button><span class="val" id="hgVal">2</span><button id="hgPlus">+</button></span>
+        <span class="hint" data-k="gapHint">人分より近くにしない</span>
+      </div>
+      <div class="row"><button class="btn primary" id="consAdd" data-k="add2">ついか</button></div>
+    </div>
+    <div class="consList" id="consList"></div>
+    <div class="card" style="margin-top:14px;">
+      <h3 data-k="histRule">前にとなりだった子</h3>
+      <div class="row">
+        <span data-k="histRuleTxt">さいきん</span>
+        <span class="stepper"><button id="hdMinus">−</button><span class="val" id="hdVal">3</span><button id="hdPlus">+</button></span>
+        <span data-k="histRuleTxt2">回の席がえでとなりだった子とは、なるべくとなりにしない</span>
+      </div>
+      <p class="hint" data-k="histRuleHint">※「ぜったい」ではなく「なるべく」です。先生の設定が最優先。</p>
+    </div>
+  </section>
+
+  <!-- ============ 席替え ============ -->
+  <section class="pane on" id="pane-shuffle">
+    <h2 class="ph" data-k="shufH">せきがえ</h2>
+    <p class="pd" data-k="shufD">じゅんびができたら、ボタンをおしてね!</p>
+    <div class="card">
+      <div class="statusLine" id="shufStatus"></div>
+    </div>
+    <div class="card">
+      <div class="row">
+        <span data-k="scope">はんい:</span>
+        <div class="seg" id="scopeSeg">
+          <button data-s="all" class="on" data-k="scopeAll">クラスぜんいん</button>
+          <button data-s="team" data-k="scopeTeam">班の中だけ</button>
+        </div>
+      </div>
+      <div class="row">
+        <span data-k="fx">えんしゅつ:</span>
+        <div class="seg" id="fxSeg">
+          <button data-f="gara" class="on">🎡 ガラポン</button>
+          <button data-f="miku">⛩ おみくじ</button>
+          <button data-f="rou">🎯 ルーレット</button>
+          <button data-f="plain" data-k="fxPlain">シンプル</button>
+        </div>
+      </div>
+    </div>
+    <div class="row" style="justify-content:center; gap:16px; margin-top:18px;">
+      <button class="btn primary big" id="btnBatch" data-k="btnBatch">🎉 いっきに せきがえ!</button>
+      <button class="btn blue big" id="btnKuji" data-k="btnKuji">🎟 ひとりずつ くじびき</button>
+    </div>
+    <div id="kujiArea" style="display:none;">
+      <div class="card" style="margin-top:18px;">
+        <h3 id="kujiTitle"></h3>
+        <p class="hint" data-k="kujiHint">自分の名前をタップして、くじをひこう!</p>
+        <div class="drawChips" id="drawChips"></div>
+        <div class="row" style="justify-content:center; margin-top:14px;">
+          <button class="btn green big" id="btnReveal" disabled data-k="btnReveal">🥁 はっぴょう!</button>
+          <button class="btn sm" id="btnKujiCancel" data-k="cancel">やめる</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ おまけくじ ============ -->
+  <section class="pane" id="pane-omake">
+    <h2 class="ph" data-k="omakeH">なんでもくじびき</h2>
+    <p class="pd" data-k="omakeD">発表の順番きめ、係きめ、日直あてなど、いろいろ使えるくじです。</p>
+    <div class="card">
+      <div class="row">
+        <span data-k="omakeFrom">だれの中から?</span>
+        <select id="omakeScope"></select>
+      </div>
+      <div class="row">
+        <div class="seg" id="omakeType">
+          <button data-t="one" class="on" data-k="omakeOne">1人えらぶ</button>
+          <button data-t="order" data-k="omakeOrder">順番をきめる</button>
+        </div>
+      </div>
+      <div class="row" style="justify-content:center;">
+        <button class="btn primary big" id="omakeGo" data-k="omakeGo">🎲 くじをひく!</button>
+      </div>
+    </div>
+    <div class="card" id="omakeResult" style="display:none;"></div>
+  </section>
+
+  <!-- ============ 履歴 ============ -->
+  <section class="pane" id="pane-history">
+    <h2 class="ph" data-k="histH">せきがえのきろく</h2>
+    <p class="pd" data-k="histD">これまでの座席が日付つきで残ります。タップで表示、画像保存もできます。</p>
+    <div class="histList" id="histList"></div>
+  </section>
+
+  <!-- ============ 設定 ============ -->
+  <section class="pane" id="pane-settings">
+    <h2 class="ph" data-k="setH">せってい</h2>
+    <p class="pd"> </p>
+    <div class="card">
+      <h3 data-k="setSnd">音</h3>
+      <div class="row">
+        <div class="seg" id="sndSeg">
+          <button data-s="fun" class="on" data-k="sndFun">にぎやか</button>
+          <button data-s="calm" data-k="sndCalm">おちつき</button>
+          <button data-s="off" data-k="sndOff">なし</button>
+        </div>
+        <button class="btn sm" id="sndTest">🔔 おとのテスト</button>
+      </div>
+      <div class="row">
+        <span style="font-weight:700;">BGM:</span>
+        <div class="seg" id="bgmSeg">
+          <button data-b="wakuwaku" class="on">🎉 わくわく</button>
+          <button data-b="yuttari">🍃 ゆったり</button>
+          <button data-b="genki">⚡ げんき</button>
+        </div>
+      </div>
+      <p class="hint">BGMのオン/オフは画面右上の🎵ボタン。効果音・BGMともに「なし」にすると鳴りません。<br>
+      🔇音が鳴らないときのチェック:①本体横の消音スイッチ ②本体横の音量ボタンで音量アップ(着信音量とは別の「メディア音量」です) ③Bluetoothイヤホンにつながっていないか ④「おとのテスト」を押して確認</p>
+    </div>
+    <div class="card">
+      <h3 data-k="setCls">クラスのかんり</h3>
+      <p class="hint" data-k="setClsHint">新年度になったら新しいクラスを追加すれば、前の年度の記録を残したまま使えます。</p>
+      <div class="row">
+        <button class="btn sm" id="classMgr" data-k="setClsBtn">🏫 クラスの切り替え・追加</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3 data-k="setData">データのほかん</h3>
+      <p class="hint" data-k="setDataHint">データはこのiPad(この端末のブラウザ)の中だけに保存されます。念のため、ときどきバックアップしておくと安心です。</p>
+      <div class="row">
+        <button class="btn sm" id="expData" data-k="expData">バックアップを書き出す</button>
+        <button class="btn sm" id="impData" data-k="impData">バックアップを読み込む</button>
+        <input type="file" id="impFile" accept=".json,application/json" style="display:none;">
+      </div>
+    </div>
+    <div class="card">
+      <h3 data-k="setDanger">データのさくじょ</h3>
+      <div class="row">
+        <button class="btn sm" id="clearHist" data-k="clearHist">きろくを全部けす</button>
+        <button class="btn sm" id="clearAll" data-k="clearAll">すべてのデータをけす</button>
+      </div>
+    </div>
+    <p class="hint" style="text-align:center;">せきがえ君 v2.1</p>
+  </section>
+
+  <!-- ============ 使い方 ============ -->
+  <section class="pane" id="pane-help">
+    <h2 class="ph">📖 つかいかた</h2>
+    <p class="pd">タップすると それぞれの せつめいが ひらきます。</p>
+
+    <details class="helpSec" open>
+      <summary>🚀 きほんの ながれ(はじめての人はここから)</summary>
+      <div class="helpBody">
+        <ol>
+          <li><b>👦めいぼ</b> — クラス全員の名前と性別を登録します。Excelや名簿ソフトから「名前 性別」の形でコピーして「まとめて登録」に貼り付けると速いです。</li>
+          <li><b>🪑ざせき</b> — 教室に合わせて席を作ります。「たて」「よこ」でマスの数を決めて、使わない席は「席あり/なし」モードでタップして消します。<br>
+          さらに編集モードを切り替えると:<br>
+          ・<b>指定席</b>…席をタップして、必ずそこに座る子を選ぶ(視力への配慮など)<br>
+          ・<b>男女</b>…タップするたびに「指定なし→男子席→女子席」と変わる<br>
+          ・<b>班</b>…班の色を選んでから席をタップすると色分けできる</li>
+          <li><b>🤝やくそく</b> — 「この子とこの子は離す」を登録します。「となりにしない」か、縦横の距離指定が選べます。</li>
+          <li><b>🎰せきがえ</b> — 準備ができたらここ!<br>
+          ・<b>🎉一括</b>…ボタン1つで全員の席が決まります(スクリーンに映すと盛り上がります)<br>
+          ・<b>🎟一人ずつくじ</b>…子どもが自分の名前をタップ→くじを引いて番号ゲット→全員引いたら「🥁はっぴょう!」</li>
+          <li>発表された席で良ければ「<b>✅けってい</b>」。これで📚きろくに日付つきで保存されます。</li>
+        </ol>
+      </div>
+    </details>
+
+    <details class="helpSec">
+      <summary>🎲 せきがえの しくみ(先生向けのひみつ)</summary>
+      <div class="helpBody">
+        <p>くじ引きは<b>演出</b>です。席は、くじを引く前にアプリが先生の設定をすべて守った形で決めています。だから配慮が必要な子も「たまたまその席になった」ように見えます。</p>
+        <p>守る順番(優先度):</p>
+        <ol>
+          <li><b>先生の配慮設定</b>(指定席・離すペア)— 必ず守る</li>
+          <li><b>男子席・女子席</b> — 原則守る</li>
+          <li><b>最近◯回の席がえで隣だった子と、なるべく隣にしない</b>(回数は🤝やくそくタブで変更。0にするとこのルールはオフ)</li>
+          <li><b>今の席から、なるべく遠くの席へ</b></li>
+        </ol>
+        <p>全部を同時に守れないときは、下のルールからゆるめて席を決め、メッセージでお知らせします。</p>
+        <p>💡「はんの なかだけ」を選ぶと、班のメンバーはそのままで班の中の席だけシャッフルできます。</p>
+      </div>
+    </details>
+
+    <details class="helpSec">
+      <summary>🏫 新年度・クラスがえのとき</summary>
+      <div class="helpBody">
+        <p>画面上部の<b>🏫ボタン</b>(クラス名が書いてあるボタン)を押すと、クラスの切り替え画面が開きます。</p>
+        <ol>
+          <li>「➕クラスを追加」に新しい名前(例:2027年度 4年1組)を入れて追加</li>
+          <li>新しいクラスで名簿を登録して使い始める</li>
+        </ol>
+        <p>前の年度のクラスは、名簿も席がえの記録もそのまま残ります。いつでも🏫ボタンで切り替えて見返せます。</p>
+      </div>
+    </details>
+
+    <details class="helpSec">
+      <summary>💾 データはどこに保存される?</summary>
+      <div class="helpBody">
+        <p>名簿や記録は、<b>この端末(iPadやiPhone)のブラウザの中だけ</b>に保存されます。インターネット上のサーバーには送られないので、児童の名前が外部に出ることはありません。</p>
+        <p>そのかわり:</p>
+        <ul>
+          <li>別の端末で開くと、データは空の状態から始まります(端末ごとに別々)</li>
+          <li>ブラウザの履歴・サイトデータを削除すると、アプリのデータも消えることがあります</li>
+        </ul>
+        <p>なので、<b>⚙️せってい→「バックアップを書き出す」</b>をときどき押して、ファイルを保存しておくのがおすすめです。「読み込む」でいつでも復元できます(全クラスまとめて保存されます)。</p>
+      </div>
+    </details>
+
+    <details class="helpSec">
+      <summary>🌐 Claude(クロード)がなくても使える?</summary>
+      <div class="helpBody">
+        <p>今、このアプリはClaudeのサイト(claude.ai)に置かれていて、開くにはClaudeアカウントでのログインが必要です。</p>
+        <p>ただし、アプリの正体は<b>1つのHTMLファイル</b>なので、Claude以外の場所にも置けます。おすすめは<b>GitHub Pages(ギットハブ ページズ)</b>という無料のサービスです:</p>
+        <ul>
+          <li>自分専用のURLができて、<b>ログイン不要・無料</b>でずっと使えます</li>
+          <li>Claudeの契約をやめても使い続けられます</li>
+          <li>引っ越しの作業はClaudeにお願いすればほとんどやってもらえます</li>
+        </ul>
+        <p>引っ越すとURLが変わるため、データは「バックアップを書き出す→新しいURL側で読み込む」で移します。<b>本格運用の前に引っ越しを済ませておく</b>と二度手間がありません。</p>
+      </div>
+    </details>
+
+    <details class="helpSec">
+      <summary>👥 他の先生に共有するには?</summary>
+      <div class="helpBody">
+        <p>方法は2つあります:</p>
+        <p><b>方法1:今のURLをそのまま共有</b><br>
+        このページを開いたときの画面枠(アプリの外側)にある<b>共有(Share)ボタン</b>で、リンクを知っている人が見られる設定に変えられます。ただし相手も<b>Claudeアカウント(無料でOK)</b>でログインする必要があるので、少しハードルがあります。</p>
+        <p><b>方法2:GitHub Pagesに置いてURLを配る(おすすめ)</b><br>
+        上の「🌐」の方法で引っ越せば、URLを教えるだけで<b>誰でもログインなしで</b>使えます。学年や学校全体に配るならこちらが確実です。</p>
+        <p>🔒 どちらの方法でも、共有されるのは<b>空のアプリ</b>です。名簿や記録は各先生の端末の中にしか保存されないため、<b>自分のクラスの児童名が他の先生に見えることはありません</b>。それぞれの先生が自分のクラスを登録して使う形になります。</p>
+      </div>
+    </details>
+
+    <details class="helpSec">
+      <summary>🔧 こまったときは</summary>
+      <div class="helpBody">
+        <ul>
+          <li><b>音が鳴らない</b> — iPhone/iPadのマナーモード(消音スイッチ)をオフに。アプリ側の音設定は右上の🔊ボタンでも変えられます。</li>
+          <li><b>「席が足りません」と出る</b> — 🪑ざせきタブで席の数(=たて×よこ−消した席)が児童数以上になっているか確認してください。</li>
+          <li><b>スクリーンに映したい</b> — iPadをプロジェクターや電子黒板につないで、🎰せきがえの発表画面をそのまま映せます。</li>
+          <li><b>ホーム画面から開きたい</b> — Safariでこのページを開き、共有ボタン→「ホーム画面に追加」。アプリのように使えます。</li>
+        </ul>
+      </div>
+    </details>
+  </section>
+</main>
+
+<!-- draw / reveal overlay -->
+<div class="overlay" id="stage">
+  <button class="closeX" id="stageClose">✕</button>
+  <div class="stageInner">
+    <h2 class="stageTitle" id="stageTitle"></h2>
+    <p class="stageSub" id="stageSub"></p>
+    <div class="stageArea" id="stageArea"></div>
+    <div class="stageBtns" id="stageBtns"></div>
+  </div>
+</div>
+
+<!-- generic modal -->
+<div class="modalBack" id="modalBack">
+  <div class="modal" id="modalBody"></div>
+</div>
+
+<div id="toast"></div>
+<canvas id="pngCanvas" width="1600" height="1200" style="display:none;"></canvas>
+<script>
+/* ================= state (multi-class) ================= */
+const LS_KEY='sekigae-v2';
+const LS_KEY_OLD='sekigae-v1';
+const MAX_KIDS=45;
+const TEAMC=['#F1595C','#3E97D4','#E89B00','#2E9E77','#8F6FD0','#F07E3A','#F06E9C','#2FA9B8','#7CB342','#8D6E63'];
+function defState(name){return {
+  name:name||'クラス1',
+  grade:'low', fx:'gara', snd:'fun', bgmOn:true, bgmStyle:'wakuwaku', scope:'all', histDepth:3,
+  students:[], rows:5, cols:6, seats:{}, cons:[], history:[], current:null
+};}
+let DB={active:null,classes:{}};
+let S=null;
+(function loadDB(){
+  try{
+    const raw=localStorage.getItem(LS_KEY);
+    if(raw){
+      const d=JSON.parse(raw);
+      if(d&&d.classes&&d.active&&d.classes[d.active]){DB=d;}
+    }
+  }catch(e){}
+  if(!DB.active){
+    // migrate old single-class data if present
+    let old=null;
+    try{const rawOld=localStorage.getItem(LS_KEY_OLD);if(rawOld)old=JSON.parse(rawOld);}catch(e){}
+    const id='c'+Date.now().toString(36);
+    DB.classes[id]=Object.assign(defState('2026年度のクラス'),old||{});
+    DB.classes[id].name=DB.classes[id].name||'2026年度のクラス';
+    DB.active=id;
+  }
+  // ensure every class has all fields
+  Object.keys(DB.classes).forEach(id=>{
+    DB.classes[id]=Object.assign(defState(DB.classes[id].name),DB.classes[id]);
+    // v2.0: old BGM style names -> new 3 styles
+    const sm={kawaii:'wakuwaku',odayaka:'yuttari',nigiyaka:'wakuwaku'};
+    const c=DB.classes[id];
+    if(sm[c.bgmStyle])c.bgmStyle=sm[c.bgmStyle];
+    if(['wakuwaku','yuttari','genki'].indexOf(c.bgmStyle)<0)c.bgmStyle='wakuwaku';
+  });
+  S=DB.classes[DB.active];
+})();
+function save(){try{localStorage.setItem(LS_KEY,JSON.stringify(DB));}catch(e){toast('ほぞんに しっぱいしました');}}
+function switchClass(id){
+  if(!DB.classes[id])return;
+  DB.active=id;S=DB.classes[id];
+  kuji=null;const ka=document.getElementById('kujiArea');if(ka)ka.style.display='none';
+  save();renderAll();updateSndBtn();
+  if(typeof bgmApply==='function')bgmApply();
+  if(typeof updateBgmBtn==='function')updateBgmBtn();
+}
+function uid(){return 's'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
+const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+function stu(id){return S.students.find(x=>x.id===id);}
+function seatObj(k){return S.seats[k]||{};}
+function setSeat(k,patch){S.seats[k]=Object.assign({},S.seats[k]||{},patch);}
+function key(r,c){return r+'_'+c;}
+function enabledSeats(){const out=[];for(let r=0;r<S.rows;r++)for(let c=0;c<S.cols;c++){const k=key(r,c);if(!seatObj(k).off)out.push(k);}return out;}
+function rc(k){const p=k.split('_');return [ +p[0], +p[1] ];}
+
+/* ================= i18n ================= */
+const TXT={
+appTitle:['せきがえ君','せきがえ君'],
+tabRoster:['めいぼ','名簿'],tabLayout:['ざせき','座席'],tabRules:['やくそく','条件'],
+tabShuffle:['せきがえ','席替え'],tabOmake:['くじびき','くじ引き'],tabHistory:['きろく','記録'],tabSettings:['せってい','設定'],tabHelp:['つかいかた','使い方'],
+rosterH:['めいぼ','名簿'],rosterD:['クラスのみんなの なまえと せいべつを とうろくします(さいだい45人)。','クラス全員の名前と性別を登録します(最大45人)。'],
+add:['ついか','追加'],add2:['ついか','追加'],bulk:['まとめて とうろく(コピペ)','まとめて登録(コピペ)'],
+rosterClear:['めいぼを ぜんぶ けす','名簿を全部消す'],
+layoutH:['ざせきの かたち','座席の形'],layoutD:['きょうしつに あわせて せきを つくります。へんしゅうモードを えらんで せきを タップ!','教室に合わせて席を作ります。編集モードを選んで席をタップ。'],
+rows:['たて','縦'],cols:['よこ','横'],
+emOnoff:['せき あり/なし','席あり/なし'],emFixed:['していせき','指定席'],emGender:['だんじょ','男女'],emTeam:['はん','班'],
+board:['こくばん','黒 板'],
+rulesH:['はいちの やくそく','配置の条件'],
+rulesD:['「このこと このこは はなす」などの はいりょを せっていします。していせき・だんじょの せきは「ざせき」タブで。','「この子とこの子は離す」などの配慮を設定します。指定席・男女席は「座席」タブで。'],
+rulesAdd:['はなす ペアを ついか','離すペアを追加'],and:['と','と'],
+ctAdj:['となりに しない(まわり1マス)','隣にしない(周囲1マス)'],ctDist:['きょりを してい','距離を指定'],
+vgap:['たてに','縦に'],hgap:['よこに','横に'],gapHint:['人ぶんより ちかくに しない','人分より近くにしない'],
+histRule:['まえに となりだった こ','以前隣だった子'],
+histRuleTxt:['さいきん','直近'],histRuleTxt2:['回の せきがえで となりだった こ とは、なるべく となりに しない','回の席替えで隣だった子とは、なるべく隣にしない'],
+histRuleHint:['※「ぜったい」ではなく「なるべく」です。せんせいの せっていが さいゆうせん。','※「絶対」ではなく「なるべく」です。先生の配慮設定が最優先。'],
+shufH:['せきがえ','席替え'],shufD:['じゅんびが できたら、ボタンを おしてね!','準備ができたら、ボタンを押してください。'],
+scope:['はんい:','範囲:'],scopeAll:['クラス ぜんいん','クラス全員'],scopeTeam:['はんの なかだけ','班の中だけ'],
+fx:['えんしゅつ:','演出:'],fxPlain:['シンプル','シンプル'],
+btnBatch:['🎉 いっきに せきがえ!','🎉 一括で席替え'],btnKuji:['🎟 ひとりずつ くじびき','🎟 一人ずつくじ引き'],
+kujiHint:['じぶんの なまえを タップして、くじを ひこう!','自分の名前をタップして、くじを引こう!'],
+btnReveal:['🥁 はっぴょう!','🥁 発表!'],cancel:['やめる','中止'],
+omakeH:['なんでも くじびき','なんでもくじ引き'],
+omakeD:['はっぴょうの じゅんばんきめ、かかりきめ など、いろいろ つかえる くじです。','発表の順番決め、係決めなど、いろいろ使えるくじです。'],
+omakeFrom:['だれの なかから?','対象:'],omakeOne:['1人 えらぶ','1人選ぶ'],omakeOrder:['じゅんばんを きめる','順番を決める'],
+omakeGo:['🎲 くじを ひく!','🎲 くじを引く'],
+histH:['せきがえの きろく','席替えの記録'],
+histD:['これまでの ざせきが ひづけつきで のこります。タップで ひょうじ、がぞうほぞんも できます。','これまでの座席が日付つきで残ります。タップで表示、画像保存もできます。'],
+setH:['せってい','設定'],setSnd:['おと','音'],sndFun:['にぎやか','にぎやか'],sndCalm:['おちつき','おちつき'],sndOff:['なし','なし'],
+setData:['データの ほかん','データの保管'],
+setDataHint:['データは この iPad(このブラウザ)の なかだけに ほぞんされます。ねんのため ときどき バックアップすると あんしんです。','データはこのiPad(このブラウザ)の中だけに保存されます。念のため、ときどきバックアップしておくと安心です。'],
+expData:['バックアップを かきだす','バックアップを書き出す'],impData:['バックアップを よみこむ','バックアップを読み込む'],
+setDanger:['データの さくじょ','データの削除'],clearHist:['このクラスの きろくを ぜんぶ けす','このクラスの記録を全部消す'],clearAll:['このクラスの データを ぜんぶ けす','このクラスのデータを全部消す'],
+setCls:['クラスの かんり','クラスの管理'],
+setClsHint:['あたらしい ねんども、まえの きろくを のこしたまま つかえるよ。うえの 🏫ボタンからも ひらけます。','新年度になったら新しいクラスを追加すれば、前の年度の記録を残したまま使えます。画面上部の🏫ボタンからも開けます。'],
+setClsBtn:['🏫 クラスの きりかえ・ついか','🏫 クラスの切り替え・追加'],
+};
+function T(k){const e=TXT[k];return e?e[S.grade==='low'?0:1]:k;}
+function applyText(){
+  $$('[data-k]').forEach(el=>{el.textContent=T(el.dataset.k);});
+  $('#appTitle').textContent=T('appTitle');
+  $('#classBtn').textContent='🏫 '+(S.name||'クラス');
+  document.documentElement.classList.toggle('g-low',S.grade==='low');
+  document.documentElement.classList.toggle('g-high',S.grade!=='low');
+}
+
+/* ================= toast / modal ================= */
+let toastTimer;
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('on');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('on'),2300);}
+$('#toast').addEventListener('click',()=>{$('#toast').classList.remove('on');clearTimeout(toastTimer);});
+function openModal(html){$('#modalBody').innerHTML=html;$('#modalBack').classList.add('on');}
+function closeModal(){$('#modalBack').classList.remove('on');}
+$('#modalBack').addEventListener('click',e=>{if(e.target.id==='modalBack')closeModal();});
+/* in-app confirm (window.confirm is blocked inside the hosted page) */
+function confirmBox(msg,onYes){
+  openModal(`<h3>${S.grade==='low'?'かくにん':'確認'}</h3>
+  <p style="font-weight:700;white-space:pre-line;">${esc(msg)}</p>
+  <div class="row" style="justify-content:flex-end;">
+    <button class="btn sm" id="cbNo">${S.grade==='low'?'やめる':'キャンセル'}</button>
+    <button class="btn primary sm" id="cbYes">OK</button>
+  </div>`);
+  $('#cbNo').addEventListener('click',closeModal);
+  $('#cbYes').addEventListener('click',()=>{closeModal();onYes();});
+}
+
+/* ================= sound ================= */
+let AC=null;
+function ac(){if(!AC){const C=window.AudioContext||window.webkitAudioContext;AC=new C();}if(AC.state==='suspended')AC.resume();return AC;}
+/* all sound effects go through one gain node so they can be cut instantly */
+let SFX=null;
+function sfxNode(){const a=ac();if(!SFX){SFX=a.createGain();SFX.gain.value=1;SFX.connect(a.destination);}return SFX;}
+function sfxKill(){if(SFX){try{SFX.disconnect();}catch(e){}SFX=null;}}
+/* iOS: audio must be unlocked inside the first real user gesture */
+function unlockAudio(){
+  try{
+    const a=ac();
+    const b=a.createBuffer(1,1,22050);
+    const s=a.createBufferSource();s.buffer=b;s.connect(a.destination);s.start(0);
+  }catch(e){}
+  bgmStart();
+  document.removeEventListener('touchend',unlockAudio);
+  document.removeEventListener('click',unlockAudio);
+}
+document.addEventListener('touchend',unlockAudio);
+document.addEventListener('click',unlockAudio);
+
+/* ================= BGM ================= */
+const midiF=m=>440*Math.pow(2,(m-69)/12);
+/* 3 loops: 32 eighth-note steps each; 0 = rest
+   perc: 0=なし 1=ハイハット(シャカ) 2=キック(ドン)  swing: 裏拍を遅らせて跳ねさせる */
+const BGMS={
+  wakuwaku:{ // 🎉 スキップするようなはずむ曲(スウィング+打楽器)
+    step:0.23,type:'triangle',vol:0.06,bvol:0.05,swing:0.34,
+    mel:[72,0,74,76, 0,79,76,74, 72,74,72,69, 67,0,0,0, 69,0,72,74, 0,76,74,72, 74,76,79,76, 72,0,0,0],
+    bass:[48,0,55,0, 52,0,55,0, 45,0,52,0, 48,0,55,0, 45,0,52,0, 48,0,55,0, 50,0,55,0, 48,0,43,0],
+    perc:[2,0,1,0, 2,0,1,1, 2,0,1,0, 2,0,1,0, 2,0,1,0, 2,0,1,1, 2,0,1,0, 2,1,1,1]},
+  yuttari:{ // 🍃 あつ森風・のんびり口笛メロディ+やわらか和音
+    step:0.46,type:'sine',vol:0.05,bvol:0.04,swing:0.15,
+    mel:[76,0,0,74, 72,0,67,0, 72,0,0,71, 69,0,64,0, 65,0,0,67, 69,0,72,0, 74,0,71,0, 67,0,0,0],
+    bass:[48,0,0,0, 55,0,52,0, 45,0,0,0, 52,0,48,0, 50,0,0,0, 57,0,53,0, 43,0,0,0, 50,0,47,0],
+    harm:[64,0,0,0, 0,0,0,0, 60,0,0,0, 0,0,0,0, 62,0,0,0, 0,0,0,0, 59,0,0,0, 0,0,0,0]},
+  genki:{ // ⚡ はやいマーチ(ドラム入り)
+    step:0.18,type:'square',vol:0.028,bvol:0.026,swing:0,
+    mel:[72,72,76,72, 79,76,72,74, 76,76,79,76, 81,79,76,74, 72,72,76,79, 84,81,79,76, 74,76,77,79, 81,79,77,74],
+    bass:[48,48,55,55, 48,48,55,55, 50,50,57,57, 50,50,57,57, 45,45,52,52, 45,45,52,52, 43,43,50,50, 55,55,55,55],
+    perc:[2,1,1,1, 2,1,1,1, 2,1,1,1, 2,1,1,1, 2,1,1,1, 2,1,1,1, 2,1,1,1, 2,1,2,1]}
+};
+let bgm={timer:null,nextT:0,step:0,gain:null};
+function bgmEnsure(){
+  const a=ac();
+  if(!bgm.gain){bgm.gain=a.createGain();bgm.gain.gain.value=1;bgm.gain.connect(a.destination);}
+}
+function bgmNote(f,t,dur,type,vol){
+  const a=ac(),o=a.createOscillator(),g=a.createGain();
+  o.type=type;o.frequency.value=f;
+  g.gain.setValueAtTime(0.0001,t);
+  g.gain.exponentialRampToValueAtTime(vol,t+0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g).connect(bgm.gain);
+  o.start(t);o.stop(t+dur+0.05);
+}
+function bgmPerc(t,kind){
+  const a=ac();
+  if(kind===2){ // キック
+    const o=a.createOscillator(),g=a.createGain();
+    o.type='sine';o.frequency.setValueAtTime(160,t);o.frequency.exponentialRampToValueAtTime(55,t+0.1);
+    g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.09,t+0.01);g.gain.exponentialRampToValueAtTime(0.0001,t+0.13);
+    o.connect(g).connect(bgm.gain);o.start(t);o.stop(t+0.16);
+  }else{ // ハイハット
+    const n=Math.floor(a.sampleRate*0.03),buf=a.createBuffer(1,n,a.sampleRate),d=buf.getChannelData(0);
+    for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*(1-i/n);
+    const src=a.createBufferSource();src.buffer=buf;
+    const g=a.createGain();g.gain.value=0.035;
+    src.connect(g).connect(bgm.gain);src.start(t);
+  }
+}
+function bgmTick(){
+  const a=ac();
+  const st=BGMS[S.bgmStyle]||BGMS.wakuwaku;
+  while(bgm.nextT<a.currentTime+0.8){
+    const i=bgm.step%st.mel.length;
+    const t=bgm.nextT+((i%2===1)?st.step*(st.swing||0):0); // 裏拍スウィング
+    if(st.mel[i])bgmNote(midiF(st.mel[i]),t,st.step*0.95,st.type,st.vol);
+    if(st.bass[i])bgmNote(midiF(st.bass[i]),t,st.step*1.8,'sine',st.bvol);
+    if(st.harm&&st.harm[i])bgmNote(midiF(st.harm[i]),t,st.step*5,'sine',0.022);
+    if(st.perc&&st.perc[i])bgmPerc(t,st.perc[i]);
+    bgm.step++;bgm.nextT+=st.step;
+  }
+}
+function bgmStart(){
+  if(bgm.timer||!S.bgmOn||S.snd==='off')return;
+  try{
+    const a=ac();bgmEnsure();
+    bgm.nextT=a.currentTime+0.08;bgm.step=0;
+    bgmTick();
+    bgm.timer=setInterval(bgmTick,250);
+  }catch(e){}
+}
+function bgmStop(){if(bgm.timer){clearInterval(bgm.timer);bgm.timer=null;}}
+function bgmApply(){if(S.bgmOn&&S.snd!=='off')bgmStart();else bgmStop();}
+function bgmDuck(d){
+  if(!bgm.gain)return;
+  try{const a=ac();bgm.gain.gain.cancelScheduledValues(a.currentTime);bgm.gain.gain.setTargetAtTime(d?0.05:1,a.currentTime,0.18);}catch(e){}
+}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)bgmStop();else bgmApply();});
+function updateBgmBtn(){const b=$('#bgmBtn');b.textContent=S.bgmOn?'🎵':'🎵ﾅｼ';b.style.opacity=S.bgmOn?'1':'.5';}
+$('#bgmBtn').addEventListener('click',()=>{
+  S.bgmOn=!S.bgmOn;save();bgmApply();updateBgmBtn();
+  toast(S.bgmOn?'BGM オン🎵':'BGM オフ');
+});
+function tone(f,dur,type,vol,when,fEnd){
+  if(S.snd==='off')return;
+  const a=ac(),o=a.createOscillator(),g=a.createGain(),t0=a.currentTime+(when||0);
+  o.type=type||'sine';o.frequency.setValueAtTime(f,t0);
+  if(fEnd)o.frequency.exponentialRampToValueAtTime(fEnd,t0+dur);
+  g.gain.setValueAtTime(0.0001,t0);g.gain.exponentialRampToValueAtTime(vol||0.15,t0+0.015);
+  g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+  o.connect(g).connect(sfxNode());o.start(t0);o.stop(t0+dur+0.05);
+}
+function noiseBurst(dur,vol,when){
+  if(S.snd==='off')return;
+  const a=ac(),n=Math.floor(a.sampleRate*dur),buf=a.createBuffer(1,n,a.sampleRate),d=buf.getChannelData(0);
+  for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*(1-i/n);
+  const src=a.createBufferSource();src.buffer=buf;
+  const g=a.createGain();g.gain.value=vol||0.12;
+  const t0=a.currentTime+(when||0);
+  src.connect(g).connect(sfxNode());src.start(t0);
+}
+const fun=()=>S.snd==='fun';
+function sndRattle(dur){if(!fun())return;
+  const n=Math.floor(dur/0.065);
+  for(let i=0;i<n;i++){noiseBurst(0.05,0.14,i*0.065);if(i%3===0)tone(150+Math.random()*80,0.06,'square',0.06,i*0.065);}
+}
+function sndShaka(){if(!fun())return;
+  [0,.14,.3,.44,.6,.74,.9,1.04,1.18].forEach((t,i)=>{noiseBurst(0.07,0.15,t);tone(900+((i%2)*300),0.04,'square',0.05,t);});
+}
+function sndTicks(times){if(!fun())return;times.forEach(t=>{tone(1400,0.03,'square',0.11,t);tone(700,0.03,'square',0.05,t);});}
+function sndPop(){if(!fun())return;tone(600,0.09,'sine',0.12,0,900);}
+function sndResult(){
+  if(S.snd==='off')return;
+  if(fun()){tone(880,0.12,'triangle',0.16);tone(1320,0.25,'triangle',0.16,0.12);}
+  else{tone(660,0.4,'sine',0.08);tone(880,0.5,'sine',0.06,0.05);}
+}
+function sndFanfare(){
+  if(S.snd==='off')return;
+  if(fun()){[[523,0],[659,.11],[784,.22],[1047,.34]].forEach(x=>tone(x[0],0.22,'triangle',0.15,x[1]));tone(1047,0.5,'triangle',0.12,0.5);}
+  else{tone(523,0.6,'sine',0.06);tone(659,0.6,'sine',0.06,0.02);tone(784,0.7,'sine',0.06,0.04);}
+}
+function sndDrum(dur){if(!fun()){return;}
+  const n=Math.floor(dur/0.038);
+  for(let i=0;i<n;i++){noiseBurst(0.03,0.11,i*0.038);if(i%4===0)tone(110,0.07,'sine',0.1,i*0.038);}
+}
+/* per-fx result sounds */
+function sndKoron(){ // ガラポン:コロン!
+  tone(880,0.08,'sine',0.15,0,520);
+  tone(740,0.07,'sine',0.12,0.11,470);
+  tone(1320,0.35,'triangle',0.15,0.22);
+}
+function sndChin(){ // おみくじ:チリーン
+  tone(2093,0.9,'sine',0.09);
+  tone(2637,0.7,'sine',0.05,0.02);
+  tone(1568,1.0,'sine',0.04,0.01);
+}
+function sndJan(){ // ルーレット:ジャン!
+  [262,523,659,784,1047].forEach(f=>tone(f,0.7,'triangle',0.16));
+  noiseBurst(0.2,0.14,0);
+  tone(1319,0.5,'triangle',0.12,0.08);
+  tone(1568,0.4,'triangle',0.08,0.12);
+}
+function sndResultFx(){
+  if(S.snd==='off')return;
+  if(!fun()){sndResult();return;}
+  if(S.fx==='gara')sndKoron();
+  else if(S.fx==='miku')sndChin();
+  else if(S.fx==='rou')sndJan();
+  else sndResult();
+}
+function updateSndBtn(){$('#sndBtn').textContent=S.snd==='fun'?'🔊':(S.snd==='calm'?'🔈':'🔇');}
+$('#sndBtn').addEventListener('click',()=>{S.snd=S.snd==='fun'?'calm':(S.snd==='calm'?'off':'fun');save();updateSndBtn();renderSettings();bgmApply();toast(S.snd==='fun'?T('sndFun'):(S.snd==='calm'?T('sndCalm'):T('sndOff')));});
+
+/* ================= tabs ================= */
+$$('#tabs .tab').forEach(b=>b.addEventListener('click',()=>{
+  $$('#tabs .tab').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  $$('section.pane').forEach(p=>p.classList.remove('on'));
+  $('#pane-'+b.dataset.pane).classList.add('on');
+  renderAll();
+}));
+
+/* ================= grade switch ================= */
+$('#gLow').addEventListener('click',()=>{S.grade='low';save();renderAll();});
+$('#gHigh').addEventListener('click',()=>{S.grade='high';save();renderAll();});
+
+/* ================= class management ================= */
+$('#classBtn').addEventListener('click',openClassModal);
+$('#classMgr').addEventListener('click',openClassModal);
+function openClassModal(){
+  const low=S.grade==='low';
+  let html=`<h3>🏫 ${low?'クラスの きりかえ・かんり':'クラスの切り替え・管理'}</h3>
+  <p class="hint">${low?'つかう クラスを タップしてね。あたらしい ねんどは「クラスを ついか」で!':'使うクラスをタップして切り替え。新年度は「クラスを追加」で名簿を新しくできます(前のクラスの記録は残ります)。'}</p>
+  <div class="consList">`;
+  Object.keys(DB.classes).forEach(id=>{
+    const c=DB.classes[id];
+    const on=id===DB.active;
+    html+=`<div class="consRow" style="${on?'border-color:var(--red);':''}">
+      <button class="btn sm ${on?'primary':''}" data-sw="${id}" style="min-width:130px;">${on?'✓ ':''}${esc(c.name)}</button>
+      <span class="hint" style="flex:1;">${c.students.length}${low?'にん':'人'}・${low?'きろく':'記録'}${c.history.length}${low?'かい':'回'}</span>
+      <button class="btn sm" data-rn="${id}">✏️</button>
+      <button class="xbtn" data-del="${id}">✕</button>
+    </div>`;
+  });
+  html+=`</div>
+  <h3 style="margin-top:16px;">➕ ${low?'クラスを ついか':'クラスを追加'}</h3>
+  <div class="row">
+    <input type="text" id="newClsName" placeholder="${low?'クラスのなまえ(れい:2027年度)':'クラス名(例:2027年度 4年1組)'}" maxlength="20" style="flex:1;min-width:160px;">
+  </div>
+  <div class="row">
+    <label style="font-size:13.5px;font-weight:700;"><input type="checkbox" id="copyLayout" checked> ${low?'いまの ざせきの かたちを コピーする':'今の座席の形(席のなし・班など)をコピーする'}</label>
+  </div>
+  <div class="row" style="justify-content:flex-end;">
+    <button class="btn sm" id="clsClose">${low?'とじる':'閉じる'}</button>
+    <button class="btn primary sm" id="clsAdd">${low?'ついか':'追加'}</button>
+  </div>`;
+  openModal(html);
+  $('#clsClose').addEventListener('click',closeModal);
+  $$('#modalBody [data-sw]').forEach(b=>b.addEventListener('click',()=>{switchClass(b.dataset.sw);closeModal();toast((low?'クラスを きりかえたよ:':'クラスを切り替えました:')+DB.classes[b.dataset.sw].name);}));
+  $$('#modalBody [data-rn]').forEach(b=>b.addEventListener('click',()=>{renameClassModal(b.dataset.rn);}));
+  $$('#modalBody [data-del]').forEach(b=>b.addEventListener('click',()=>{
+    const id=b.dataset.del;
+    if(Object.keys(DB.classes).length<=1){toast(low?'さいごの クラスは けせないよ':'最後のクラスは削除できません');return;}
+    confirmBox((low?'クラス「':'クラス「')+DB.classes[id].name+(low?'」を けしますか?\nめいぼも きろくも ぜんぶ きえます。もどせません!':'」を削除しますか?\n名簿も記録もすべて消えます。元に戻せません。'),()=>{
+      delete DB.classes[id];
+      if(DB.active===id){DB.active=Object.keys(DB.classes)[0];S=DB.classes[DB.active];}
+      save();renderAll();updateSndBtn();openClassModal();
+    });
+  }));
+  $('#clsAdd').addEventListener('click',()=>{
+    const nm=$('#newClsName').value.trim();
+    if(!nm){toast(low?'クラスの なまえを いれてね':'クラス名を入力してください');return;}
+    const copy=$('#copyLayout').checked;
+    const id='c'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+    const c=defState(nm);
+    c.grade=S.grade;c.fx=S.fx;c.snd=S.snd;c.histDepth=S.histDepth;
+    if(copy){
+      c.rows=S.rows;c.cols=S.cols;
+      c.seats={};
+      Object.keys(S.seats).forEach(k=>{const o=S.seats[k];c.seats[k]={off:o.off||0,g:o.g||'',team:o.team||0,fix:null};});
+    }
+    DB.classes[id]=c;
+    switchClass(id);
+    closeModal();
+    toast((low?'あたらしい クラス「':'新しいクラス「')+nm+(low?'」が できたよ!めいぼを とうろくしてね':'」を作りました。名簿を登録してください'));
+  });
+}
+function renameClassModal(id){
+  const low=S.grade==='low';
+  openModal(`<h3>✏️ ${low?'クラスの なまえを かえる':'クラス名の変更'}</h3>
+  <div class="row"><input type="text" id="rnName" value="${esc(DB.classes[id].name)}" maxlength="20" style="flex:1;"></div>
+  <div class="row" style="justify-content:flex-end;">
+    <button class="btn sm" id="rnNo">${low?'やめる':'キャンセル'}</button>
+    <button class="btn primary sm" id="rnYes">OK</button>
+  </div>`);
+  $('#rnNo').addEventListener('click',()=>{closeModal();openClassModal();});
+  $('#rnYes').addEventListener('click',()=>{
+    const nm=$('#rnName').value.trim();
+    if(nm)DB.classes[id].name=nm;
+    save();renderAll();closeModal();openClassModal();
+  });
+}
+
+/* ================= roster ================= */
+let newG='M';
+$('#newGender').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;newG=b.dataset.g;
+  $$('#newGender button').forEach(x=>x.classList.toggle('on',x===b));
+});
+$('#addStu').addEventListener('click',()=>{
+  const n=$('#newName').value.trim();
+  if(!n){toast(S.grade==='low'?'なまえを いれてね':'名前を入力してください');return;}
+  if(S.students.length>=MAX_KIDS){toast('45人までです');return;}
+  S.students.push({id:uid(),name:n,g:newG});
+  $('#newName').value='';save();renderAll();
+});
+$('#newName').addEventListener('keydown',e=>{if(e.key==='Enter')$('#addStu').click();});
+$('#bulkOpen').addEventListener('click',()=>{
+  openModal(`<h3>${T('bulk')}</h3>
+  <p class="hint">1行に「名前 性別」で貼り付けてください。区切りはスペース・タブ・カンマOK。<br>性別は 男 / 女 / M / F / 男子 / 女子 など。例:<br>やまだ たろう→「山田太郎 男」</p>
+  <textarea id="bulkText" rows="10" style="width:100%;"></textarea>
+  <div class="row" style="justify-content:flex-end;">
+    <button class="btn sm" onclick="closeModal()">やめる</button>
+    <button class="btn primary sm" id="bulkGo">とうろく</button>
+  </div>`);
+  $('#bulkGo').addEventListener('click',()=>{
+    const lines=$('#bulkText').value.split(/\n/).map(x=>x.trim()).filter(x=>x);
+    let added=0,unknown=0;
+    for(const line of lines){
+      if(S.students.length>=MAX_KIDS)break;
+      const parts=line.split(/[\s,、\t]+/).filter(x=>x);
+      if(!parts.length)continue;
+      let g=null;
+      const last=parts[parts.length-1];
+      if(/^(男子?|M|m|♂)$/.test(last))g='M';
+      else if(/^(女子?|F|f|♀)$/.test(last))g='F';
+      const name=(g?parts.slice(0,-1):parts).join('');
+      if(!name)continue;
+      if(!g){g='M';unknown++;}
+      S.students.push({id:uid(),name:name,g:g});added++;
+    }
+    save();closeModal();renderAll();
+    toast(added+'人 とうろくしました'+(unknown?'(性別ふめい'+unknown+'人→男子にしました)':''));
+  });
+});
+$('#rosterClear').addEventListener('click',()=>{
+  if(!S.students.length){toast(S.grade==='low'?'めいぼは もう からっぽだよ':'名簿はすでに空です');return;}
+  confirmBox(S.grade==='low'
+    ?'めいぼの '+S.students.length+'人を ぜんぶ けしますか?\n(ざせきの かたちと きろくは のこります)'
+    :'名簿の'+S.students.length+'人を全員削除しますか?\n(座席の形と記録は残ります)',()=>{
+    S.students=[];
+    Object.keys(S.seats).forEach(k=>{S.seats[k].fix=null;});
+    S.cons=[];
+    save();renderAll();
+    toast(S.grade==='low'?'めいぼを からっぽに したよ':'名簿を空にしました');
+  });
+});
+function removeStu(id){
+  S.students=S.students.filter(x=>x.id!==id);
+  Object.keys(S.seats).forEach(k=>{if(S.seats[k].fix===id)S.seats[k].fix=null;});
+  S.cons=S.cons.filter(c=>c.a!==id&&c.b!==id);
+  save();renderAll();
+}
+function renderRoster(){
+  const L=$('#rosterList');L.innerHTML='';
+  S.students.forEach(st=>{
+    const d=document.createElement('div');d.className='stuRow';
+    d.innerHTML=`<span class="nm">${esc(st.name)}</span>
+      <span class="gtoggle">
+        <button class="${st.g==='M'?'onM':''}" data-g="M">男</button>
+        <button class="${st.g==='F'?'onF':''}" data-g="F">女</button>
+      </span>
+      <button class="xbtn" title="けす">✕</button>`;
+    d.querySelectorAll('.gtoggle button').forEach(b=>b.addEventListener('click',()=>{st.g=b.dataset.g;save();renderAll();}));
+    d.querySelector('.xbtn').addEventListener('click',()=>{
+      confirmBox(st.name+(S.grade==='low'?' を めいぼから けしますか?':' を名簿から削除しますか?'),()=>removeStu(st.id));
+    });
+    L.appendChild(d);
+  });
+  const boys=S.students.filter(x=>x.g==='M').length;
+  $('#rosterCount').textContent=S.students.length?`${S.students.length}人(男子${boys}・女子${S.students.length-boys})`:'';
+}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+
+/* ================= layout editor ================= */
+let editMode='onoff', teamSel=1;
+$('#editMode').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;editMode=b.dataset.m;
+  $$('#editMode button').forEach(x=>x.classList.toggle('on',x===b));
+  $('#teamRow').style.display=editMode==='team'?'flex':'none';
+  renderLayout();
+});
+function step(idBase,get,set,min,max){
+  $('#'+idBase+'Minus').addEventListener('click',()=>{set(Math.max(min,get()-1));});
+  $('#'+idBase+'Plus').addEventListener('click',()=>{set(Math.min(max,get()+1));});
+}
+step('row',()=>S.rows,v=>{S.rows=v;save();renderAll();},1,10);
+step('col',()=>S.cols,v=>{S.cols=v;save();renderAll();},1,12);
+function teamOf(k){return seatObj(k).team||0;}
+function renderTeamChips(){
+  const w=$('#teamChips');w.innerHTML='';
+  for(let t=1;t<=10;t++){
+    const b=document.createElement('button');b.className='teamChip'+(teamSel===t?' on':'');
+    b.style.background=TEAMC[t-1]+'33';b.style.color=TEAMC[t-1];
+    b.textContent=(S.grade==='low'?'はん':'班')+t;
+    b.addEventListener('click',()=>{teamSel=t;renderTeamChips();});
+    w.appendChild(b);
+  }
+  const b0=document.createElement('button');b0.className='teamChip'+(teamSel===0?' on':'');
+  b0.textContent=S.grade==='low'?'はんを けす':'班を消す';
+  b0.addEventListener('click',()=>{teamSel=0;renderTeamChips();});
+  w.appendChild(b0);
+}
+function seatEl(k,idx,opts){
+  const o=seatObj(k), d=document.createElement('div');
+  d.className='seat';
+  if(o.off)d.className+= opts.edit?' offEdit':' off';
+  if(o.g==='M')d.classList.add('gM'); if(o.g==='F')d.classList.add('gF');
+  if(o.fix&&stu(o.fix))d.classList.add('fixed');
+  let inner='';
+  if(!o.off&&idx>0)inner+=`<span class="no">${idx}</span>`;
+  if(o.g)inner+=`<span class="gmark" style="color:${o.g==='M'?'var(--sky)':'var(--pink)'}">${o.g==='M'?'男':'女'}</span>`;
+  if(o.team){inner+=`<span class="tmark" style="color:${TEAMC[o.team-1]}">${S.grade==='low'?'はん':'班'}${o.team}</span>`;
+    d.style.borderColor=TEAMC[o.team-1]; d.style.background=TEAMC[o.team-1]+'1A';}
+  let nm='';
+  if(opts.pos){ // display by positions map
+    for(const sid in opts.pos){const p=opts.pos[sid];if(key(p[0],p[1])===k){const s2=opts.stuMap?opts.stuMap[sid]:stu(sid);if(s2)nm=s2.name;}}
+  } else if(o.fix&&stu(o.fix)&&opts.edit){nm=stu(o.fix).name;}
+  if(o.off&&opts.edit)nm=S.grade==='low'?'なし':'なし';
+  inner+=`<span class="nm ${nm?'':'empty'}">${esc(nm)||'・'}</span>`;
+  d.innerHTML=inner;
+  return d;
+}
+function renderChartInto(el,opts){
+  el.innerHTML='';
+  const rows=opts.rows||S.rows, cols=opts.cols||S.cols;
+  el.style.gridTemplateColumns=`repeat(${cols},minmax(${opts.big?76:62}px,1fr))`;
+  el.style.maxWidth=(cols*(opts.big?120:104))+'px';
+  const seatsSrc=opts.seats||S.seats;
+  // enabled index
+  let idx=0;const idxMap={};
+  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const k=key(r,c);const off=(seatsSrc[k]||{}).off;if(!off){idx++;idxMap[k]=idx;}}
+  const saveSeats=S.seats, saveRows=S.rows, saveCols=S.cols;
+  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+    const k=key(r,c);
+    const realSeats=S.seats; S.seats=seatsSrc; // temp for seatObj
+    const d=seatEl(k,idxMap[k]||0,opts);
+    S.seats=realSeats;
+    if(opts.onTap&&!((seatsSrc[k]||{}).off&&!opts.edit)){d.classList.add('tappable');d.addEventListener('click',()=>opts.onTap(k));}
+    else if(opts.onTap&&opts.edit){d.classList.add('tappable');d.addEventListener('click',()=>opts.onTap(k));}
+    el.appendChild(d);
+  }
+  return idxMap;
+}
+function renderLayout(){
+  $('#rowVal').textContent=S.rows; $('#colVal').textContent=S.cols;
+  renderTeamChips();
+  const hints={
+    onoff:['タップで せきを けしたり もどしたり できるよ','タップで席のあり/なしを切り替え'],
+    fixed:['せきを タップして、そこに すわる こを えらぶよ','席をタップして、固定する児童を選択'],
+    gender:['タップするたびに なし→男子→女子 と かわるよ','タップするたびに 指定なし→男子席→女子席 と切り替え'],
+    team:['はんの いろを えらんでから せきを タップ','班を選んでから席をタップ'],
+  };
+  $('#editHint').textContent=hints[editMode][S.grade==='low'?0:1];
+  renderChartInto($('#editGrid'),{edit:true,onTap:k=>{
+    const o=seatObj(k);
+    if(editMode==='onoff'){setSeat(k,{off:!o.off?1:0});}
+    else if(o.off){toast(S.grade==='low'?'この せきは「なし」だよ':'この席は「なし」です');return;}
+    else if(editMode==='gender'){setSeat(k,{g:o.g===''||!o.g?'M':(o.g==='M'?'F':'')});}
+    else if(editMode==='team'){setSeat(k,{team:teamSel});}
+    else if(editMode==='fixed'){pickFixed(k);return;}
+    save();renderAll();
+  }});
+  $('#seatCount').textContent=(S.grade==='low'?'せきのかず:':'席数:')+enabledSeats().length+' / '+(S.grade==='low'?'じどう':'児童')+S.students.length+'人';
+}
+function pickFixed(k){
+  const cur=seatObj(k).fix;
+  let html=`<h3>${T('emFixed')}</h3><div class="pickerList">`;
+  html+=`<button class="pickBtn" data-sid="">${S.grade==='low'?'してい かいじょ':'指定解除'}</button>`;
+  S.students.forEach(st=>{html+=`<button class="pickBtn" data-sid="${st.id}" ${st.id===cur?'style="border-color:var(--red)"':''}>${esc(st.name)}</button>`;});
+  html+='</div>';
+  openModal(html);
+  $$('#modalBody .pickBtn').forEach(b=>b.addEventListener('click',()=>{
+    const sid=b.dataset.sid||null;
+    if(sid)Object.keys(S.seats).forEach(kk=>{if(S.seats[kk].fix===sid)S.seats[kk].fix=null;});
+    setSeat(k,{fix:sid});
+    save();closeModal();renderAll();
+  }));
+}
+
+/* ================= rules ================= */
+let consT='adj', vg=2, hg=2;
+$('#consType').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;consT=b.dataset.t;
+  $$('#consType button').forEach(x=>x.classList.toggle('on',x===b));
+  $('#distRow').style.display=consT==='dist'?'flex':'none';
+});
+step('vg',()=>vg,v=>{vg=v;$('#vgVal').textContent=v;},1,8);
+step('hg',()=>hg,v=>{hg=v;$('#hgVal').textContent=v;},1,8);
+step('hd',()=>S.histDepth,v=>{S.histDepth=v;save();$('#hdVal').textContent=v;},0,10);
+$('#consAdd').addEventListener('click',()=>{
+  const a=$('#consA').value,b=$('#consB').value;
+  if(!a||!b||a===b){toast(S.grade==='low'?'べつべつの 2人を えらんでね':'別々の2人を選んでください');return;}
+  const VG=consT==='adj'?2:vg+1, HG=consT==='adj'?2:hg+1;
+  S.cons.push({a:a,b:b,vg:VG,hg:HG,adj:consT==='adj'});
+  save();renderAll();toast(S.grade==='low'?'ついかしたよ':'追加しました');
+});
+function renderRules(){
+  const selA=$('#consA'),selB=$('#consB');
+  [selA,selB].forEach(sel=>{
+    const cur=sel.value;sel.innerHTML='';
+    S.students.forEach(st=>{const o=document.createElement('option');o.value=st.id;o.textContent=st.name;sel.appendChild(o);});
+    if(cur)sel.value=cur;
+  });
+  if(S.students.length>1&&selA.value===selB.value)selB.selectedIndex=1;
+  $('#hdVal').textContent=S.histDepth;
+  const L=$('#consList');L.innerHTML='';
+  S.cons.forEach((c,i)=>{
+    const A=stu(c.a),B=stu(c.b);if(!A||!B)return;
+    const d=document.createElement('div');d.className='consRow';
+    const desc=c.adj?(S.grade==='low'?'となりに しない':'隣にしない')
+      :(S.grade==='low'?`たてに${c.vg-1}人ぶん・よこに${c.hg-1}人ぶん はなす`:`縦${c.vg-1}人分・横${c.hg-1}人分離す`);
+    d.innerHTML=`<span class="desc">🤝 ${esc(A.name)} と ${esc(B.name)}:${desc}</span><button class="xbtn">✕</button>`;
+    d.querySelector('.xbtn').addEventListener('click',()=>{S.cons.splice(i,1);save();renderAll();});
+    L.appendChild(d);
+  });
+}
+
+/* ================= solver ================= */
+function histNeighborWeights(){
+  const w={};
+  const H=S.history.slice(-S.histDepth);
+  H.forEach((h,i)=>{
+    const weight=30+50*((i+1)/H.length); // recent = heavier
+    const ids=Object.keys(h.pos||{});
+    for(let x=0;x<ids.length;x++)for(let y=x+1;y<ids.length;y++){
+      const p=h.pos[ids[x]],q=h.pos[ids[y]];
+      if(Math.abs(p[0]-q[0])<=1&&Math.abs(p[1]-q[1])<=1){
+        const kk=ids[x]<ids[y]?ids[x]+'|'+ids[y]:ids[y]+'|'+ids[x];
+        w[kk]=(w[kk]||0)+weight;
+      }
+    }
+  });
+  return w;
+}
+function computeAssignment(scope){
+  const keys=enabledSeats();
+  const kids=S.students.slice();
+  if(!kids.length)return {err:(S.grade==='low'?'まず めいぼに なまえを とうろくしてね':'まず名簿に児童を登録してください')};
+  if(kids.length>keys.length)return {err:(S.grade==='low'?'せきが たりないよ!「ざせき」タブで ふやしてね':'席が足りません。「座席」タブで増やしてください')};
+  const pos={}; // k -> seat idx
+  keys.forEach((k,i)=>pos[k]=i);
+  const seatArr=keys.map(k=>{const o=seatObj(k);const p=rc(k);return {k:k,r:p[0],c:p[1],g:o.g||'',fix:(o.fix&&stu(o.fix))?o.fix:null,team:o.team||0};});
+  const N=seatArr.length;
+  const locked=new Array(N).fill(false);
+  let assign=new Array(N).fill(null);
+  // scope pools
+  let pool=[]; // list of arrays of seat indices that may swap among themselves
+  if(scope==='team'){
+    if(!S.current)return {err:(S.grade==='low'?'まだ いまの せきが ないよ。さきに ふつうの せきがえを してね':'まだ現在の座席がありません。先に通常の席替えをしてください')};
+    // start from current positions
+    const curPos=S.current.pos||{};
+    const byTeam={};
+    kids.forEach(kd=>{
+      const p=curPos[kd.id];if(!p)return;
+      const k=key(p[0],p[1]);const i=pos[k];
+      if(i===undefined)return;
+      assign[i]=kd.id;
+      const t=seatArr[i].team;
+      if(seatArr[i].fix===kd.id){locked[i]=true;return;}
+      if(t){(byTeam[t]=byTeam[t]||[]).push(i);}else{locked[i]=true;}
+    });
+    if(!Object.keys(byTeam).length)return {err:(S.grade==='low'?'はんが まだ ないよ。「ざせき」タブで はんを つくってね':'班がまだ設定されていません。「座席」タブで班を設定してください')};
+    pool=Object.values(byTeam).filter(a=>a.length>1);
+    if(!pool.length)return {err:'班の中で入れかえできる席がありません'};
+  }else{
+    // fixed first
+    const used=new Set();
+    seatArr.forEach((s,i)=>{if(s.fix){assign[i]=s.fix;locked[i]=true;used.add(s.fix);}});
+    const rest=kids.filter(kd=>!used.has(kd.id));
+    // greedy: gendered seats first
+    const restM=rest.filter(x=>x.g==='M'), restF=rest.filter(x=>x.g==='F');
+    shuffle(restM);shuffle(restF);
+    const openIdx=seatArr.map((s,i)=>i).filter(i=>!locked[i]);
+    shuffle(openIdx);
+    for(const i of openIdx){const s=seatArr[i];
+      if(s.g==='M'&&restM.length)assign[i]=restM.pop();
+      else if(s.g==='F'&&restF.length)assign[i]=restF.pop();
+    }
+    for(const i of openIdx){if(assign[i])continue;
+      const kd=restM.length&&(!restF.length||Math.random()<restM.length/(restM.length+restF.length))?restM.pop():restF.pop();
+      if(kd)assign[i]=kd;
+    }
+    assign=assign.map(x=>x&&x.id?x.id:x);
+    pool=[seatArr.map((s,i)=>i).filter(i=>!locked[i])];
+  }
+  // scoring
+  const hw=histNeighborWeights();
+  const cur=S.current?S.current.pos||{}:{};
+  const consList=S.cons.filter(c=>stu(c.a)&&stu(c.b));
+  const maxD=S.rows+S.cols;
+  function fullScore(A){
+    let p=0;
+    const posOf={};
+    for(let i=0;i<N;i++){if(A[i])posOf[A[i]]=i;}
+    // gender hard
+    for(let i=0;i<N;i++){const sid=A[i];if(!sid)continue;const s=seatArr[i],kd=stu(sid);
+      if(s.g&&kd&&kd.g!==s.g)p+=1e6;}
+    // cons hard
+    for(const c of consList){
+      const ia=posOf[c.a],ib=posOf[c.b];
+      if(ia===undefined||ib===undefined)continue;
+      const dr=Math.abs(seatArr[ia].r-seatArr[ib].r),dc=Math.abs(seatArr[ia].c-seatArr[ib].c);
+      if(dr<c.vg&&dc<c.hg)p+=1e6;
+    }
+    // history neighbors soft
+    for(let i=0;i<N;i++){const a=A[i];if(!a)continue;
+      for(let j=i+1;j<N;j++){const b=A[j];if(!b)continue;
+        if(Math.abs(seatArr[i].r-seatArr[j].r)<=1&&Math.abs(seatArr[i].c-seatArr[j].c)<=1){
+          const kk=a<b?a+'|'+b:b+'|'+a;
+          if(hw[kk])p+=hw[kk];
+        }
+      }
+    }
+    // distance from current soft
+    for(let i=0;i<N;i++){const sid=A[i];if(!sid)continue;const cp=cur[sid];if(!cp)continue;
+      const d=Math.abs(seatArr[i].r-cp[0])+Math.abs(seatArr[i].c-cp[1]);
+      p+=Math.max(0,maxD-d)*2;
+    }
+    return p;
+  }
+  function annealOnce(A0){
+    let A=A0.slice(), sc=fullScore(A);
+    let best=A.slice(), bestSc=sc;
+    const ITER=3500;
+    for(let it=0;it<ITER;it++){
+      const grp=pool[Math.floor(Math.random()*pool.length)];
+      if(grp.length<2)continue;
+      const i=grp[Math.floor(Math.random()*grp.length)];
+      let j=grp[Math.floor(Math.random()*grp.length)];
+      if(i===j)continue;
+      [A[i],A[j]]=[A[j],A[i]];
+      const ns=fullScore(A);
+      const temp=Math.max(1,60*(1-it/ITER));
+      if(ns<=sc||Math.random()<Math.exp((sc-ns)/temp)){sc=ns;if(sc<bestSc){bestSc=sc;best=A.slice();}}
+      else{[A[i],A[j]]=[A[j],A[i]];}
+    }
+    return {A:best,sc:bestSc};
+  }
+  let best=null;
+  const tries=scope==='team'?3:4;
+  for(let t=0;t<tries;t++){
+    let A0;
+    if(scope==='team')A0=assign.slice();
+    else{
+      // fresh random init each try (reuse structure)
+      A0=assign.slice();
+      const grp=pool[0];
+      // fisher-yates the occupants of open seats (respect nothing; anneal fixes)
+      for(let i=grp.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));
+        [A0[grp[i]],A0[grp[j]]]=[A0[grp[j]],A0[grp[i]]];}
+    }
+    const r=annealOnce(A0);
+    if(!best||r.sc<best.sc)best=r;
+    if(best.sc<1e6&&t>=1)break;
+  }
+  const warn=best.sc>=1e6?(S.grade==='low'?'ぜんぶの やくそくは まもれなかったよ。せってい を みなおしてね':'すべての条件を満たす配置が見つかりませんでした(一部の条件が守られていない可能性があります)'):null;
+  // build result maps
+  const asg={},posMap={},numOf={};
+  best.A.forEach((sid,i)=>{if(sid){asg[seatArr[i].k]=sid;posMap[sid]=[seatArr[i].r,seatArr[i].c];numOf[sid]=i+1;}});
+  // seat numbers = enabled order index+1 (seatArr is in reading order)
+  return {asg:asg,pos:posMap,numOf:numOf,warn:warn};
+}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+/* ================= stage / fx ================= */
+const stage=$('#stage');
+let stageSeq=0; // bumped on open/close: cancels pending animation timeouts
+function openStage(title,sub){stageSeq++;$('#stageTitle').textContent=title;$('#stageSub').textContent=sub||'';const ar=$('#stageArea');ar.innerHTML='';ar.style.width='';$('#stageBtns').innerHTML='';stage.classList.add('on');bgmDuck(true);}
+function closeStage(){
+  stageSeq++;
+  stage.classList.remove('on');
+  sfxKill();                                   // 予約済みの効果音を即停止
+  $$('.confetti').forEach(el=>el.remove());    // 紙吹雪も消す
+  bgmDuck(false);
+}
+$('#stageClose').addEventListener('click',closeStage);
+function stageBtn(label,cls,fn){const b=document.createElement('button');b.className='btn '+cls;b.textContent=label;b.addEventListener('click',fn);$('#stageBtns').appendChild(b);return b;}
+function confetti(){
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  const cols=TEAMC;
+  for(let i=0;i<44;i++){
+    const d=document.createElement('div');d.className='confetti';
+    d.style.left=Math.random()*100+'vw';
+    d.style.background=cols[Math.floor(Math.random()*cols.length)];
+    d.style.animation=`confFall ${1.8+Math.random()*1.6}s linear ${Math.random()*0.6}s both`;
+    d.style.borderRadius=Math.random()<0.5?'50%':'2px';
+    document.body.appendChild(d);
+    setTimeout(()=>d.remove(),4200);
+  }
+}
+function fxPlay(fxKind,onDone){ // returns after animation, caller shows result
+  const area=$('#stageArea');
+  const seq=stageSeq; // stage closed? -> abort chain
+  const alive=()=>seq===stageSeq;
+  if(fxKind==='gara'){
+    area.innerHTML=`<div class="gara"><div class="garaDrum"><div class="win">🎁</div></div><div class="garaBall">?</div></div>`;
+    const drum=area.querySelector('.garaDrum'),ball=area.querySelector('.garaBall');
+    drum.classList.add('spin');sndRattle(1.6);
+    setTimeout(()=>{
+      if(!alive())return;
+      ball.style.background=TEAMC[Math.floor(Math.random()*TEAMC.length)];
+      ball.classList.add('out');sndResultFx();
+      setTimeout(()=>{if(alive())onDone();},650);
+    },1650);
+  }else if(fxKind==='miku'){
+    area.innerHTML=`<div class="miku"><div class="mikuStick">?</div><div class="mikuBox">おみくじ</div></div>`;
+    const m=area.querySelector('.miku');
+    m.classList.add('shake');sndShaka();
+    setTimeout(()=>{if(!alive())return;m.classList.add('outStick');sndResultFx();setTimeout(()=>{if(alive())onDone();},600);},1350);
+  }else if(fxKind==='rou'){
+    area.innerHTML=`<div class="rouWrap"><div class="rouArrow"></div><div class="rouWheel"></div><div class="rouCenter"><div class="n">?</div></div></div>`;
+    const wheel=area.querySelector('.rouWheel');
+    wheel.style.transition='transform 2.1s cubic-bezier(.15,.65,.2,1)';
+    requestAnimationFrame(()=>{wheel.style.transform='translateX(-50%) rotate('+(1440+Math.random()*360)+'deg)';});
+    sndDrum(2.0);
+    const ticks=[];for(let t=0;t<2.0;t+=0.06+t*0.05)ticks.push(t);
+    sndTicks(ticks);
+    setTimeout(()=>{if(!alive())return;sndResultFx();setTimeout(()=>{if(alive())onDone();},320);},2100);
+  }else{
+    area.innerHTML=`<div class="simpleBox">…</div>`;
+    sndDrum(0.9);
+    setTimeout(()=>{if(!alive())return;sndResultFx();setTimeout(()=>{if(alive())onDone();},180);},900);
+  }
+}
+function showResultNum(num,label,subLabel){
+  // 決定音は fxPlay の演出終わりで鳴らし済み
+  const area=$('#stageArea');
+  area.innerHTML=`<div class="resultNum">${num}</div><div class="resultName">${esc(label)}</div>${subLabel?`<div class="hint">${esc(subLabel)}</div>`:''}`;
+}
+
+/* ================= shuffle pane ================= */
+$('#scopeSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;S.scope=b.dataset.s;save();renderShuffle();});
+$('#fxSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;S.fx=b.dataset.f;save();renderShuffle();});
+function renderShuffle(){
+  $$('#scopeSeg button').forEach(b=>b.classList.toggle('on',b.dataset.s===S.scope));
+  $$('#fxSeg button').forEach(b=>b.classList.toggle('on',b.dataset.f===S.fx));
+  const n=S.students.length, seats=enabledSeats().length;
+  const ok=n>0&&n<=seats;
+  const fixN=Object.keys(S.seats).filter(k=>S.seats[k].fix&&stu(S.seats[k].fix)&&!S.seats[k].off).length;
+  const low=S.grade==='low';
+  $('#shufStatus').innerHTML=
+    `<span class="${ok?'okc':'badc'}">${low?'じどう':'児童'} ${n}人 / ${low?'せき':'席'} ${seats} ${ok?'✓':'✗'}</span>`+
+    `<span>${low?'していせき':'指定席'} ${fixN}</span>`+
+    `<span>${low?'はなすペア':'離すペア'} ${S.cons.length}</span>`+
+    `<span>${low?'きろく':'記録'} ${S.history.length}${low?'かい':'回'}</span>`;
+}
+let kuji=null; // {res, drawn:{}, scope}
+$('#btnBatch').addEventListener('click',()=>{
+  const res=computeAssignment(S.scope);
+  if(res.err){toast(res.err);return;}
+  if(res.warn)toast(res.warn);
+  openStage(S.grade==='low'?'せきがえ ちゅう…':'席替え中…','');
+  fxPlay(S.fx,()=>revealChart(res));
+});
+$('#btnKuji').addEventListener('click',()=>{
+  const res=computeAssignment(S.scope);
+  if(res.err){toast(res.err);return;}
+  if(res.warn)toast(res.warn);
+  kuji={res:res,drawn:{}};
+  $('#kujiArea').style.display='block';
+  renderKuji();
+  $('#kujiArea').scrollIntoView({behavior:'smooth'});
+});
+$('#btnKujiCancel').addEventListener('click',()=>{kuji=null;$('#kujiArea').style.display='none';});
+function renderKuji(){
+  if(!kuji)return;
+  const low=S.grade==='low';
+  const total=Object.keys(kuji.res.numOf).length, done=Object.keys(kuji.drawn).length;
+  $('#kujiTitle').textContent=(low?'くじびき ':'くじ引き ')+done+' / '+total+(low?'にん':'人');
+  const w=$('#drawChips');w.innerHTML='';
+  S.students.forEach(st=>{
+    if(!(st.id in kuji.res.numOf))return;
+    const b=document.createElement('button');
+    if(st.id in kuji.drawn){
+      b.className='drawChip done';
+      b.innerHTML=`${esc(st.name)} <span class="num">${kuji.drawn[st.id]}${low?'ばん':'番'}</span>`;
+    }else{
+      b.className='drawChip';
+      b.textContent=st.name;
+      b.addEventListener('click',()=>drawOne(st));
+    }
+    w.appendChild(b);
+  });
+  $('#btnReveal').disabled=done<total;
+}
+function drawOne(st){
+  const low=S.grade==='low';
+  openStage(st.name+(low?' さんの くじ':' さんのくじ'),low?'ボタンを おしてね!':'ボタンを押してね!');
+  const go=stageBtn(low?'🎰 くじを ひく!':'🎰 くじを引く!','primary big',()=>{
+    $('#stageBtns').innerHTML='';
+    fxPlay(S.fx,()=>{
+      const num=kuji.res.numOf[st.id];
+      showResultNum(num+(low?'ばん':'番'),st.name+(low?' さん':' さん'));
+      kuji.drawn[st.id]=num;
+      renderKuji();
+      stageBtn(low?'つぎの ひとへ →':'次の人へ →','green big',closeStage);
+    });
+  });
+}
+$('#btnReveal').addEventListener('click',()=>{
+  if(!kuji)return;
+  openStage(S.grade==='low'?'はっぴょう!':'発表!','');
+  const seq=stageSeq;
+  sndDrum(1.2);
+  setTimeout(()=>{if(seq===stageSeq&&kuji)revealChart(kuji.res);},1250);
+});
+function revealChart(res){
+  const low=S.grade==='low';
+  $('#stageTitle').textContent=low?'あたらしい せき!':'新しい座席!';
+  $('#stageSub').textContent='';
+  const area=$('#stageArea');
+  area.innerHTML=`<div style="width:100%;"><div class="boardBar">${T('board')}</div><div class="chartWrap"><div class="grid revealChart" id="revealGrid"></div></div></div>`;
+  area.style.width='min(1000px,96vw)';
+  const grid=$('#revealGrid');
+  renderChartInto(grid,{pos:res.pos,big:true});
+  // hide names then pop in
+  const seatsEls=Array.from(grid.children).filter(el=>!el.classList.contains('off'));
+  const withNames=seatsEls.filter(el=>{const nm=el.querySelector('.nm');return nm&&!nm.classList.contains('empty');});
+  const seq=stageSeq;
+  withNames.forEach(el=>{el.style.visibility='hidden';});
+  withNames.forEach((el,i)=>{
+    setTimeout(()=>{if(seq!==stageSeq)return;el.style.visibility='visible';el.classList.add('pop');if(i%2===0)sndPop();},250+i*130);
+  });
+  const doneAt=250+withNames.length*130+300;
+  setTimeout(()=>{
+    if(seq!==stageSeq)return;
+    sndFanfare();if(fun())confetti();
+    stageBtn(low?'✅ このせきに けってい!':'✅ この席に決定!','primary big',()=>confirmAssign(res));
+    if(!kuji){
+      stageBtn(low?'🔁 やりなおす':'🔁 やり直す','',()=>{
+        const r2=computeAssignment(S.scope);
+        if(r2.err){toast(r2.err);return;}
+        if(r2.warn)toast(r2.warn);
+        $('#stageBtns').innerHTML='';
+        revealChart(r2);
+      });
+    }
+    stageBtn(low?'とじる':'閉じる','sm',closeStage);
+  },doneAt);
+}
+function confirmAssign(res){
+  const seatsSnap=JSON.parse(JSON.stringify(S.seats));
+  const names={};
+  Object.keys(res.pos).forEach(sid=>{const st2=stu(sid);if(st2)names[sid]=st2.name;});
+  const entry={date:new Date().toISOString(),pos:res.pos,rows:S.rows,cols:S.cols,seats:seatsSnap,names:names};
+  try{entry.img=drawHist(entry,1200,900).toDataURL('image/jpeg',0.78);}catch(e){}
+  S.history.push(entry);
+  S.current={pos:res.pos};
+  kuji=null;$('#kujiArea').style.display='none';
+  saveWithImgFallback(entry);
+  closeStage();renderAll();
+  toast(S.grade==='low'?'けってい! きろくに のこしたよ📚':'決定!記録に保存しました📚');
+}
+/* if storage is full, drop oldest stored images first, then this one */
+function saveWithImgFallback(entry){
+  try{localStorage.setItem(LS_KEY,JSON.stringify(DB));return;}catch(e){}
+  const all=[];
+  Object.keys(DB.classes).forEach(id=>DB.classes[id].history.forEach(h=>{if(h.img&&h!==entry)all.push(h);}));
+  all.sort((a,b)=>a.date<b.date?-1:1);
+  for(const h of all){
+    delete h.img;
+    try{localStorage.setItem(LS_KEY,JSON.stringify(DB));toast('保存の空きが少ないため、古い記録の画像を整理しました');return;}catch(e){}
+  }
+  delete entry.img;
+  try{localStorage.setItem(LS_KEY,JSON.stringify(DB));toast('空きが少ないため、今回の画像は保存できませんでした(記録は保存済み)');}catch(e){toast('ほぞんに しっぱいしました');}
+}
+
+/* ================= omake ================= */
+let omakeT='one';
+$('#omakeType').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;omakeT=b.dataset.t;$$('#omakeType button').forEach(x=>x.classList.toggle('on',x===b));});
+function omakeGroups(){
+  const g={};
+  if(S.current&&S.current.pos){
+    for(const sid in S.current.pos){
+      const p=S.current.pos[sid];const t=teamOf(key(p[0],p[1]));
+      if(t&&stu(sid))(g[t]=g[t]||[]).push(sid);
+    }
+  }
+  return g;
+}
+function renderOmake(){
+  const sel=$('#omakeScope');const cur=sel.value;sel.innerHTML='';
+  const low=S.grade==='low';
+  const o0=document.createElement('option');o0.value='all';o0.textContent=low?'クラス ぜんいん':'クラス全員';sel.appendChild(o0);
+  const g=omakeGroups();
+  Object.keys(g).sort((a,b)=>a-b).forEach(t=>{
+    const o=document.createElement('option');o.value='t'+t;o.textContent=(low?'はん':'班')+t+'('+g[t].length+(low?'にん':'人')+')';sel.appendChild(o);
+  });
+  if(cur)sel.value=cur;
+  if(!sel.value)sel.value='all';
+}
+$('#omakeGo').addEventListener('click',()=>{
+  const low=S.grade==='low';
+  const v=$('#omakeScope').value;
+  let members;
+  if(v==='all')members=S.students.map(x=>x.id);
+  else members=(omakeGroups()[v.slice(1)]||[]);
+  if(!members.length){toast(low?'めいぼが からっぽだよ':'対象がいません');return;}
+  const shuffled=shuffle(members.slice());
+  openStage(omakeT==='one'?(low?'だれかな…?':'誰でしょう…?'):(low?'じゅんばん くじ':'順番くじ'),'');
+  fxPlay(S.fx,()=>{
+    if(omakeT==='one'){
+      const win=stu(shuffled[0]);
+      $('#stageArea').innerHTML=`<div class="resultNum" style="font-size:min(64px,12vw);">🎉</div><div class="resultName" style="font-size:34px;">${esc(win?win.name:'?')} さん!</div>`;
+      sndResult();if(fun())confetti();
+    }else{
+      let html='<ol style="font-size:22px;font-weight:800;line-height:1.9;margin:0;padding-left:1.6em;">';
+      shuffled.forEach(sid=>{const st2=stu(sid);if(st2)html+=`<li>${esc(st2.name)}</li>`;});
+      html+='</ol>';
+      $('#stageArea').innerHTML=`<div style="max-height:52vh;overflow:auto;background:var(--card);border:2px solid var(--line);border-radius:14px;padding:14px 22px;">${html}</div>`;
+      sndFanfare();
+    }
+    stageBtn(low?'もういちど':'もう一度','',()=>{closeStage();setTimeout(()=>$('#omakeGo').click(),80);});
+    stageBtn(low?'とじる':'閉じる','primary',closeStage);
+  });
+});
+
+/* ================= history ================= */
+function fmtDate(iso){
+  const d=new Date(iso);
+  return d.getFullYear()+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getDate()).padStart(2,'0')+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+}
+function renderHistory(){
+  const L=$('#histList');L.innerHTML='';
+  const low=S.grade==='low';
+  if(!S.history.length){L.innerHTML=`<p class="hint">${low?'まだ きろくが ないよ。せきがえを すると ここに たまるよ!':'まだ記録がありません。席替えをするとここに残ります。'}</p>`;return;}
+  S.history.slice().reverse().forEach((h,ri)=>{
+    const i=S.history.length-1-ri;
+    const d=document.createElement('div');d.className='histRow';
+    const n=Object.keys(h.pos||{}).length;
+    const thumb=h.img?`<img class="thumb" src="${h.img}" alt="座席表">`:'';
+    d.innerHTML=`${thumb}<span class="dt">📅 ${fmtDate(h.date)}</span><span class="meta">${n}${low?'にん':'人'}${i===S.history.length-1?(low?' ・いまの せき':' ・現在の座席'):''}</span>
+      <button class="btn sm view">${low?'みる':'表示'}</button>
+      <button class="btn sm png">${low?'がぞうで ほぞん':'画像で保存'}</button>
+      <button class="xbtn">✕</button>`;
+    const th=d.querySelector('.thumb');if(th)th.addEventListener('click',()=>viewHist(i));
+    d.querySelector('.view').addEventListener('click',()=>viewHist(i));
+    d.querySelector('.png').addEventListener('click',()=>exportPNG(S.history[i]));
+    d.querySelector('.xbtn').addEventListener('click',()=>{
+      confirmBox(low?'このきろくを けす?':'この記録を削除しますか?',()=>{
+        S.history.splice(i,1);S.current=S.history.length?{pos:S.history[S.history.length-1].pos}:null;save();renderAll();
+      });
+    });
+    L.appendChild(d);
+  });
+}
+function viewHist(i){
+  const h=S.history[i];
+  openStage('📅 '+fmtDate(h.date),'');
+  const area=$('#stageArea');
+  area.style.width='min(1000px,96vw)';
+  if(h.img){
+    area.innerHTML=`<img src="${h.img}" alt="座席表" style="max-width:100%;border-radius:12px;border:2px solid var(--line);">`;
+  }else{
+    area.innerHTML=`<div style="width:100%;"><div class="boardBar">${T('board')}</div><div class="chartWrap"><div class="grid" id="histGrid"></div></div></div>`;
+    renderChartInto($('#histGrid'),{pos:h.pos,rows:h.rows,cols:h.cols,seats:h.seats});
+  }
+  stageBtn(S.grade==='low'?'がぞうで ほぞん':'画像で保存','blue',()=>exportPNG(h));
+  stageBtn(S.grade==='low'?'とじる':'閉じる','',closeStage);
+}
+function drawHist(h,W,H){
+  const cv=$('#pngCanvas'),ctx=cv.getContext('2d');
+  const rows=h.rows,cols=h.cols;
+  cv.width=W;cv.height=H;
+  const sc=W/1600;
+  ctx.fillStyle='#FFF9F0';ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#463A2F';ctx.font='bold '+Math.round(44*sc)+'px sans-serif';ctx.textAlign='left';
+  ctx.fillText('座席表  '+fmtDate(h.date),50*sc,70*sc);
+  // blackboard
+  ctx.fillStyle='#3E6B57';roundRect(ctx,50*sc,100*sc,W-100*sc,54*sc,10*sc);ctx.fill();
+  ctx.fillStyle='#EAF5EF';ctx.font='bold '+Math.round(30*sc)+'px sans-serif';ctx.textAlign='center';
+  ctx.fillText('黒　板',W/2,138*sc);
+  const top=190*sc,pad=14*sc;
+  const cw=Math.min(170*sc,(W-100*sc-(cols-1)*pad)/cols), ch=Math.min(120*sc,(H-top-60*sc-(rows-1)*pad)/rows);
+  const gx=(W-(cols*cw+(cols-1)*pad))/2;
+  // reverse pos: k->name (prefer names stored at confirm time)
+  const nameAt={};
+  for(const sid in (h.pos||{})){
+    const p=h.pos[sid];
+    const nm=(h.names&&h.names[sid])||(stu(sid)&&stu(sid).name)||'?';
+    nameAt[p[0]+'_'+p[1]]=nm;
+  }
+  let num=0;
+  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+    const k=r+'_'+c,o=(h.seats||{})[k]||{};
+    if(o.off)continue;
+    num++;
+    const x=gx+c*(cw+pad),y=top+r*(ch+pad);
+    ctx.fillStyle=o.team?TEAMC[o.team-1]+'22':'#FFFFFF';
+    ctx.strokeStyle=o.team?TEAMC[o.team-1]:'#D9C9AF';ctx.lineWidth=3*sc;
+    roundRect(ctx,x,y,cw,ch,12*sc);ctx.fill();ctx.stroke();
+    ctx.fillStyle='#95836F';ctx.font=Math.round(20*sc)+'px sans-serif';ctx.textAlign='left';
+    ctx.fillText(num,x+10*sc,y+26*sc);
+    const nm=nameAt[k];
+    if(nm){
+      ctx.fillStyle='#463A2F';ctx.textAlign='center';
+      let fs=Math.min(30*sc,(cw-16*sc)/Math.max(1,nm.length)*1.6);
+      ctx.font='bold '+Math.round(fs)+'px sans-serif';
+      ctx.fillText(nm,x+cw/2,y+ch/2+fs/3+6*sc);
+    }
+    if(o.g){ctx.fillStyle=o.g==='M'?'#3E97D4':'#F06E9C';ctx.font='bold '+Math.round(18*sc)+'px sans-serif';ctx.textAlign='right';ctx.fillText(o.g==='M'?'男':'女',x+cw-8*sc,y+24*sc);}
+  }
+  return cv;
+}
+function exportPNG(h){
+  const url=h.img||drawHist(h,1600,1200).toDataURL('image/png');
+  const a=document.createElement('a');
+  a.download='sekigae_'+h.date.slice(0,10)+(url.slice(0,15).includes('jpeg')?'.jpg':'.png');
+  a.href=url;
+  document.body.appendChild(a);a.click();a.remove();
+  toast(S.grade==='low'?'がぞうを ほぞんしたよ🖼':'画像を保存しました🖼');
+}
+function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+
+/* ================= settings ================= */
+$('#sndSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;S.snd=b.dataset.s;save();renderSettings();updateSndBtn();bgmApply();if(S.snd!=='off')sndResult();});
+$('#bgmSeg').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  S.bgmStyle=b.dataset.b;save();renderSettings();
+  if(S.bgmOn&&S.snd!=='off'){bgmStop();bgmStart();}
+});
+$('#sndTest').addEventListener('click',()=>{
+  if(S.snd==='off'){toast('音の設定が「なし」になっています。「にぎやか」か「おちつき」を選んでください');return;}
+  sndResult();
+  toast('🔔 音を鳴らしました。聞こえないときは本体の音量・消音スイッチ・イヤホンを確認してください');
+});
+function renderSettings(){
+  $$('#sndSeg button').forEach(b=>b.classList.toggle('on',b.dataset.s===S.snd));
+  $$('#bgmSeg button').forEach(b=>b.classList.toggle('on',b.dataset.b===(S.bgmStyle||'wakuwaku')));
+  $('#gLow').classList.toggle('on',S.grade==='low');
+  $('#gHigh').classList.toggle('on',S.grade!=='low');
+  updateBgmBtn();
+}
+$('#expData').addEventListener('click',()=>{
+  const blob=new Blob([JSON.stringify(DB,null,1)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.download='sekigae_backup_'+new Date().toISOString().slice(0,10)+'.json';
+  a.href=URL.createObjectURL(blob);
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  toast('全クラスのバックアップを書き出しました');
+});
+$('#impData').addEventListener('click',()=>$('#impFile').click());
+$('#impFile').addEventListener('change',e=>{
+  const f=e.target.files[0];if(!f)return;
+  const rd=new FileReader();
+  rd.onload=()=>{
+    try{
+      const data=JSON.parse(rd.result);
+      if(data&&data.classes&&data.active){
+        // full backup: replace everything
+        confirmBox('バックアップ全体を読み込みます。\n今このアプリに入っているデータは、バックアップの内容に置き換わります。よろしいですか?',()=>{
+          DB=data;
+          Object.keys(DB.classes).forEach(id=>{DB.classes[id]=Object.assign(defState(DB.classes[id].name),DB.classes[id]);});
+          if(!DB.classes[DB.active])DB.active=Object.keys(DB.classes)[0];
+          S=DB.classes[DB.active];
+          save();renderAll();updateSndBtn();toast('よみこみました✓');
+        });
+      }else if(data&&Array.isArray(data.students)){
+        // old single-class backup: add as a new class
+        const id='c'+Date.now().toString(36);
+        DB.classes[id]=Object.assign(defState('よみこんだクラス'),data);
+        switchClass(id);
+        toast('クラスとして よみこみました✓');
+      }else throw new Error('bad');
+    }catch(err){toast('よみこめませんでした。ファイルを確認してください');}
+  };
+  rd.readAsText(f);
+  e.target.value='';
+});
+$('#clearHist').addEventListener('click',()=>{
+  confirmBox('このクラスの席替え記録をすべて削除しますか?\n(名簿・座席設定は残ります)',()=>{S.history=[];S.current=null;save();renderAll();toast('記録を消しました');});
+});
+$('#clearAll').addEventListener('click',()=>{
+  confirmBox('クラス「'+S.name+'」の名簿・座席・条件・記録をすべて削除します。\n(他のクラスには影響しません)\nこの操作は元に戻せません。よろしいですか?',()=>{
+    const nm=S.name;
+    DB.classes[DB.active]=defState(nm);
+    S=DB.classes[DB.active];
+    save();renderAll();updateSndBtn();toast('このクラスのデータを消しました');
+  });
+});
+
+/* ================= render all ================= */
+function renderAll(){
+  applyText();
+  renderRoster();
+  renderLayout();
+  renderRules();
+  renderShuffle();
+  renderOmake();
+  renderHistory();
+  renderSettings();
+}
+renderAll();
+updateSndBtn();
+</script>
