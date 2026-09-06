@@ -141,6 +141,7 @@ p.pd{margin:0 0 14px; color:var(--muted); font-size:13.5px;}
 .badge{display:inline-block; border-radius:999px; padding:2px 10px; font-size:12px; font-weight:800;}
 .badge.b-boy{background:var(--sky-soft); color:var(--sky);}
 .badge.b-girl{background:var(--pink-soft); color:var(--pink);}
+.badge.b-total{background:var(--line); color:var(--muted);}
 
 /* ---------- roster ---------- */
 .rosterList{display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:8px;}
@@ -394,14 +395,13 @@ p.pd{margin:0 0 14px; color:var(--muted); font-size:13.5px;}
 </header>
 
 <nav class="tabs" id="tabs">
+  <button class="tab on" data-pane="shuffle"><span class="tico">🎰</span><span class="tt" data-k="tabShuffle">せきがえ</span></button>
   <button class="tab" data-pane="roster"><span class="tico">👦</span><span class="tt" data-k="tabRoster">めいぼ</span></button>
   <button class="tab" data-pane="layout"><span class="tico">🪑</span><span class="tt" data-k="tabLayout">ざせき</span></button>
-  <button class="tab" data-pane="rules"><span class="tico">🤝</span><span class="tt" data-k="tabRules">やくそく</span></button>
-  <button class="tab on" data-pane="shuffle"><span class="tico">🎰</span><span class="tt" data-k="tabShuffle">せきがえ</span></button>
   <button class="tab" data-pane="omake"><span class="tico">🎯</span><span class="tt" data-k="tabOmake">くじびき</span></button>
   <button class="tab" data-pane="history"><span class="tico">📚</span><span class="tt" data-k="tabHistory">きろく</span></button>
+  <button class="tab" data-pane="rules"><span class="tico">🤝</span><span class="tt" data-k="tabRules">やくそく</span></button>
   <button class="tab" data-pane="settings"><span class="tico">⚙️</span><span class="tt" data-k="tabSettings">せってい</span></button>
-  <button class="tab" data-pane="help"><span class="tico">📖</span><span class="tt" data-k="tabHelp">つかいかた</span></button>
 </nav>
 
 <main>
@@ -409,6 +409,11 @@ p.pd{margin:0 0 14px; color:var(--muted); font-size:13.5px;}
   <section class="pane" id="pane-roster">
     <h2 class="ph" data-k="rosterH">めいぼ</h2>
     <p class="pd" data-k="rosterD">クラスのみんなの名前と性別を登録します(最大45人)。</p>
+    <div class="row" id="rosterStats" style="gap:8px; margin-top:0;">
+      <span class="badge b-boy" id="rcBoy" style="font-size:15px; padding:6px 14px;">男子 0</span>
+      <span class="badge b-girl" id="rcGirl" style="font-size:15px; padding:6px 14px;">女子 0</span>
+      <span class="badge b-total" id="rcTotal" style="font-size:15px; padding:6px 14px;">合計 0</span>
+    </div>
     <div class="card">
       <div class="row">
         <input type="text" id="newName" placeholder="名前" style="flex:1; min-width:150px;" maxlength="12">
@@ -420,7 +425,6 @@ p.pd{margin:0 0 14px; color:var(--muted); font-size:13.5px;}
       <div class="row">
         <button class="btn sm" id="bulkOpen" data-k="bulk">まとめて登録(コピペ)</button>
         <button class="btn sm" id="rosterClear" data-k="rosterClear">めいぼを全部けす</button>
-        <span class="hint" id="rosterCount"></span>
       </div>
     </div>
     <div class="rosterList" id="rosterList"></div>
@@ -612,13 +616,9 @@ p.pd{margin:0 0 14px; color:var(--muted); font-size:13.5px;}
         <button class="btn sm" id="clearAll" data-k="clearAll">すべてのデータをけす</button>
       </div>
     </div>
-    <p class="hint" style="text-align:center;">せきがえ君 v2.2</p>
-  </section>
-
-  <!-- ============ 使い方 ============ -->
-  <section class="pane" id="pane-help">
-    <h2 class="ph">📖 つかいかた</h2>
-    <p class="pd">タップすると それぞれの せつめいが ひらきます。</p>
+    <div class="card">
+      <h3>📖 つかいかた</h3>
+      <p class="hint">タップすると それぞれの せつめいが ひらきます。</p>
 
     <details class="helpSec" open>
       <summary>🚀 きほんの ながれ(はじめての人はここから)</summary>
@@ -717,6 +717,8 @@ p.pd{margin:0 0 14px; color:var(--muted); font-size:13.5px;}
         </ul>
       </div>
     </details>
+    </div>
+    <p class="hint" style="text-align:center;">せきがえ君 v2.3</p>
   </section>
 </main>
 
@@ -1207,7 +1209,9 @@ function renderRoster(){
     L.appendChild(d);
   });
   const boys=S.students.filter(x=>x.g==='M').length;
-  $('#rosterCount').textContent=S.students.length?`${S.students.length}人(男子${boys}・女子${S.students.length-boys})`:'';
+  $('#rcBoy').textContent=(S.grade==='low'?'男子 ':'男子 ')+boys;
+  $('#rcGirl').textContent=(S.grade==='low'?'女子 ':'女子 ')+(S.students.length-boys);
+  $('#rcTotal').textContent=(S.grade==='low'?'合計 ':'合計 ')+S.students.length;
 }
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 
@@ -1576,12 +1580,10 @@ function renderShuffle(){
   $$('#fxSeg button').forEach(b=>b.classList.toggle('on',b.dataset.f===S.fx));
   const n=S.students.length, seats=enabledSeats().length;
   const ok=n>0&&n<=seats;
-  const fixN=Object.keys(S.seats).filter(k=>S.seats[k].fix&&stu(S.seats[k].fix)&&!S.seats[k].off).length;
   const low=S.grade==='low';
+  // このタブは子どもと一緒に見るので、指定席・離すペアの数は表示しない
   $('#shufStatus').innerHTML=
     `<span class="${ok?'okc':'badc'}">${low?'じどう':'児童'} ${n}人 / ${low?'せき':'席'} ${seats} ${ok?'✓':'✗'}</span>`+
-    `<span>${low?'していせき':'指定席'} ${fixN}</span>`+
-    `<span>${low?'はなすペア':'離すペア'} ${S.cons.length}</span>`+
     `<span>${low?'きろく':'記録'} ${S.history.length}${low?'かい':'回'}</span>`;
 }
 let kuji=null; // {res, drawn:{}, scope}
