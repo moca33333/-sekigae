@@ -215,6 +215,14 @@ p.pd{margin:0 0 14px; color:var(--muted); font-size:13.5px;}
 
 /* ---------- shuffle pane ---------- */
 .statusLine{display:flex; gap:14px; flex-wrap:wrap; font-size:13.5px; font-weight:700;}
+
+/* せきがえタブは子どもと一緒に見る画面なので、文字もボタンも大きく・にぎやかに */
+#pane-shuffle .ph{font-size:28px;}
+#pane-shuffle .pd{font-size:16px;}
+#pane-shuffle .statusLine{font-size:18px; gap:18px; justify-content:center;}
+#pane-shuffle .seg button{font-size:16px; padding:12px 18px;}
+#pane-shuffle .card{border-width:3px;}
+#pane-shuffle .btn.big{font-size:23px; padding:18px 34px;}
 .statusLine .okc{color:var(--ok);} .statusLine .badc{color:var(--bad);}
 .drawChips{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;}
 .drawChip{
@@ -604,10 +612,12 @@ p.pd{margin:0 0 14px; color:var(--muted); font-size:13.5px;}
       <h3 data-k="setData">データのほかん</h3>
       <p class="hint" data-k="setDataHint">データはこのiPad(この端末のブラウザ)の中だけに保存されます。念のため、ときどきバックアップしておくと安心です。</p>
       <div class="row">
+        <button class="btn sm primary" id="expShare" data-k="expShare">📤 共有して送る</button>
         <button class="btn sm" id="expData" data-k="expData">バックアップを書き出す</button>
         <button class="btn sm" id="impData" data-k="impData">バックアップを読み込む</button>
         <input type="file" id="impFile" accept=".json,application/json" style="display:none;">
       </div>
+      <p class="hint" data-k="shareHint">💡 端末を変えるときは「共有して送る」がおすすめです。LINEやメール、AirDropなどにその場で送れます。送った先の端末で開いて保存し、「バックアップを読み込む」で選べば完了です。</p>
     </div>
     <div class="card">
       <h3 data-k="setDanger">データのさくじょ</h3>
@@ -718,7 +728,7 @@ p.pd{margin:0 0 14px; color:var(--muted); font-size:13.5px;}
       </div>
     </details>
     </div>
-    <p class="hint" style="text-align:center;">せきがえ君 v2.3</p>
+    <p class="hint" style="text-align:center;">せきがえ君 v2.5</p>
   </section>
 </main>
 
@@ -835,6 +845,8 @@ setH:['せってい','設定'],setSnd:['おと','音'],sndFun:['にぎやか','�
 setData:['データの ほかん','データの保管'],
 setDataHint:['データは この iPad(このブラウザ)の なかだけに ほぞんされます。ねんのため ときどき バックアップすると あんしんです。','データはこのiPad(このブラウザ)の中だけに保存されます。念のため、ときどきバックアップしておくと安心です。'],
 expData:['バックアップを かきだす','バックアップを書き出す'],impData:['バックアップを よみこむ','バックアップを読み込む'],
+expShare:['📤 きょうゆうして おくる','📤 共有して送る'],
+shareHint:['💡 たんまつを かえるときは「きょうゆうして おくる」が おすすめです。LINEやメールなどに その場で おくれます。おくった さきの たんまつで ひらいて ほぞんし、「バックアップを よみこむ」で えらべば かんりょうです。','💡 端末を変えるときは「共有して送る」がおすすめです。LINEやメール、AirDropなどにその場で送れます。送った先の端末で開いて保存し、「バックアップを読み込む」で選べば完了です。'],
 setDanger:['データの さくじょ','データの削除'],clearHist:['このクラスの きろくを ぜんぶ けす','このクラスの記録を全部消す'],clearAll:['このクラスの データを ぜんぶ けす','このクラスのデータを全部消す'],
 setCls:['クラスの かんり','クラスの管理'],
 setClsHint:['あたらしい ねんども、まえの きろくを のこしたまま つかえるよ。うえの 🏫ボタンからも ひらけます。','新年度になったら新しいクラスを追加すれば、前の年度の記録を残したまま使えます。画面上部の🏫ボタンからも開けます。'],
@@ -1248,11 +1260,13 @@ function seatEl(k,idx,opts){
   const o=seatObj(k), d=document.createElement('div');
   d.className='seat';
   if(o.off)d.className+= opts.edit?' offEdit':' off';
-  if(o.g==='M')d.classList.add('gM'); if(o.g==='F')d.classList.add('gF');
+  // 男女の指定は「ざせき」タブ(先生の編集画面)だけに表示。指定席の子には出ないため
+  // 発表・くじ・きろくなど子どもが見る画面では不自然に見えるので、そちらは非表示にする。
+  if(opts.edit){if(o.g==='M')d.classList.add('gM'); if(o.g==='F')d.classList.add('gF');}
   if(o.fix&&stu(o.fix))d.classList.add('fixed');
   let inner='';
   if(!o.off&&idx>0)inner+=`<span class="no">${idx}</span>`;
-  if(o.g)inner+=`<span class="gmark" style="color:${o.g==='M'?'var(--sky)':'var(--pink)'}">${o.g==='M'?'男':'女'}</span>`;
+  if(opts.edit&&o.g)inner+=`<span class="gmark" style="color:${o.g==='M'?'var(--sky)':'var(--pink)'}">${o.g==='M'?'男':'女'}</span>`;
   if(o.team){inner+=`<span class="tmark" style="color:${TEAMC[o.team-1]}">${S.grade==='low'?'はん':'班'}${o.team}</span>`;
     d.style.borderColor=TEAMC[o.team-1]; d.style.background=TEAMC[o.team-1]+'1A';}
   let nm='';
@@ -1583,8 +1597,8 @@ function renderShuffle(){
   const low=S.grade==='low';
   // このタブは子どもと一緒に見るので、指定席・離すペアの数は表示しない
   $('#shufStatus').innerHTML=
-    `<span class="${ok?'okc':'badc'}">${low?'じどう':'児童'} ${n}人 / ${low?'せき':'席'} ${seats} ${ok?'✓':'✗'}</span>`+
-    `<span>${low?'きろく':'記録'} ${S.history.length}${low?'かい':'回'}</span>`;
+    `<span class="${ok?'okc':'badc'}">👦👧 ${n}${low?'にん':'人'} / 🪑 ${seats}${low?'せき':'席'} ${ok?'✓':'✗'}</span>`+
+    `<span>📚 ${low?'きろく':'記録'} ${S.history.length}${low?'かい':'回'}</span>`;
 }
 let kuji=null; // {res, drawn:{}, scope}
 $('#btnBatch').addEventListener('click',()=>{
@@ -1840,7 +1854,7 @@ function drawHist(h,W,H){
       ctx.font='bold '+Math.round(fs)+'px sans-serif';
       ctx.fillText(nm,x+cw/2,y+ch/2+fs/3+6*sc);
     }
-    if(o.g){ctx.fillStyle=o.g==='M'?'#3E97D4':'#F06E9C';ctx.font='bold '+Math.round(18*sc)+'px sans-serif';ctx.textAlign='right';ctx.fillText(o.g==='M'?'男':'女',x+cw-8*sc,y+24*sc);}
+    // 記録の画像も子どもの目に触れるため、男女の表示は入れない(指定席の子との見た目の不自然さを避ける)
   }
   return cv;
 }
@@ -1873,14 +1887,36 @@ function renderSettings(){
   $('#gHigh').classList.toggle('on',S.grade!=='low');
   updateBgmBtn();
 }
-$('#expData').addEventListener('click',()=>{
+function buildBackupFile(){
   const blob=new Blob([JSON.stringify(DB,null,1)],{type:'application/json'});
+  const filename='sekigae_backup_'+new Date().toISOString().slice(0,10)+'.json';
+  try{return new File([blob],filename,{type:'application/json'});}
+  catch(e){return blob;} // 古いブラウザ向けフォールバック(name属性なし)
+}
+$('#expData').addEventListener('click',()=>{
+  const file=buildBackupFile();
   const a=document.createElement('a');
-  a.download='sekigae_backup_'+new Date().toISOString().slice(0,10)+'.json';
-  a.href=URL.createObjectURL(blob);
+  a.download=file.name||('sekigae_backup_'+new Date().toISOString().slice(0,10)+'.json');
+  a.href=URL.createObjectURL(file);
   document.body.appendChild(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(a.href),4000);
   toast('全クラスのバックアップを書き出しました');
+});
+$('#expShare').addEventListener('click',async()=>{
+  const low=S.grade==='low';
+  const file=buildBackupFile();
+  const canFileShare=navigator.canShare&&file instanceof File&&navigator.canShare({files:[file]});
+  if(canFileShare){
+    try{
+      await navigator.share({files:[file],title:'せきがえ君 バックアップ',text:'せきがえ君のバックアップファイルです'});
+    }catch(e){
+      if(e&&e.name!=='AbortError')toast(low?'きょうゆうできませんでした。「バックアップを かきだす」を おためしください':'共有できませんでした。「バックアップを書き出す」をお試しください');
+    }
+  }else{
+    // 共有APIが使えない端末(主にPC)向けフォールバック:ふつうに書き出す
+    $('#expData').click();
+    toast(low?'この たんまつは きょうゆうボタンが つかえないので、かきだしました':'この端末は共有ボタンが使えないため、書き出しを行いました');
+  }
 });
 $('#impData').addEventListener('click',()=>$('#impFile').click());
 $('#impFile').addEventListener('change',e=>{
