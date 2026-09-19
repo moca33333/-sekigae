@@ -174,7 +174,9 @@ p.pd{margin:0 0 14px; color:var(--muted); font-size:13.5px;}
 }
 .seat .no{position:absolute; top:2px; left:6px; font-size:10.5px; color:var(--muted); font-weight:700; font-variant-numeric:tabular-nums;}
 .seat .gmark{position:absolute; top:2px; right:5px; font-size:10.5px; font-weight:800;}
-.seat .tmark{position:absolute; bottom:2px; right:5px; font-size:10px; font-weight:800; opacity:.85;}
+.seat .marks{position:absolute; left:4px; right:4px; bottom:2px; display:flex; gap:2px; pointer-events:none;}
+.seat .tmark{margin-left:auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:10px; font-weight:800; opacity:.85;}
+.seat .cmark{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:9.5px; font-weight:800; color:#fff; border-radius:999px; padding:0 6px; line-height:1.5;}
 .seat .nm{font-weight:800; font-size:15px; text-align:center; line-height:1.25; word-break:break-all;}
 .seat .nm.empty{color:var(--line2); font-weight:700;}
 .seat.gM{background:var(--sky-soft);}
@@ -456,10 +458,20 @@ p.pd{margin:0 0 14px; color:var(--muted); font-size:13.5px;}
           <button data-m="fixed" data-k="emFixed">指定席</button>
           <button data-m="gender" data-k="emGender">男女</button>
           <button data-m="team" data-k="emTeam">班</button>
+          <button data-m="car" data-k="emCar">号車</button>
         </div>
       </div>
       <div class="row" id="teamRow" style="display:none;">
         <div class="teamChips" id="teamChips"></div>
+      </div>
+      <div class="row" id="carRow" style="display:none;">
+        <div class="teamChips" id="carChips"></div>
+      </div>
+      <div class="row" id="carAutoRow" style="display:none;">
+        <span data-k="carAutoTxt">列ごとに自動で作る:</span>
+        <span class="stepper"><button id="caMinus">−</button><span class="val" id="caVal">2</span><button id="caPlus">+</button></span>
+        <span data-k="carAutoTxt2">列ずつ</span>
+        <button class="btn sm" id="carAuto" data-k="carAuto">⚡ 自動で作る</button>
       </div>
       <p class="hint" id="editHint"></p>
     </div>
@@ -494,6 +506,16 @@ p.pd{margin:0 0 14px; color:var(--muted); font-size:13.5px;}
       <div class="row"><button class="btn primary" id="consAdd" data-k="add2">ついか</button></div>
     </div>
     <div class="consList" id="consList"></div>
+    <div class="card" style="margin-top:14px;">
+      <h3 data-k="carRule">🚌 号車をかえる</h3>
+      <div class="row">
+        <div class="seg" id="carRuleSeg">
+          <button data-v="1" class="on" data-k="carRuleOn">オン</button>
+          <button data-v="0" data-k="carRuleOff">オフ</button>
+        </div>
+      </div>
+      <p class="hint" data-k="carRuleHint">オンにすると、前とちがう号車の席になるようにします(先に「座席」タブの「号車」で号車を作っておきます)。指定席の子は対象外です。</p>
+    </div>
     <div class="card" style="margin-top:14px;">
       <h3 data-k="histRule">前にとなりだった子</h3>
       <div class="row">
@@ -639,7 +661,8 @@ p.pd{margin:0 0 14px; color:var(--muted); font-size:13.5px;}
           さらに編集モードを切り替えると:<br>
           ・<b>指定席</b>…席をタップして、必ずそこに座る子を選ぶ(視力への配慮など)<br>
           ・<b>男女</b>…タップするたびに「指定なし→男子席→女子席」と変わる<br>
-          ・<b>班</b>…班の色を選んでから席をタップすると色分けできる</li>
+          ・<b>班</b>…班の色を選んでから席をタップすると色分けできる<br>
+          ・<b>号車</b>…「2列ずつ」などのまとまりを「◯号車」として作る。「自動で作る」なら列ごとに一度に作れる(→席替えで「前とちがう号車」にできる)</li>
           <li><b>🤝やくそく</b> — 「この子とこの子は離す」を登録します。「となりにしない」か、縦横の距離指定が選べます。</li>
           <li><b>🎰せきがえ</b> — 準備ができたらここ!<br>
           ・<b>🎉一括</b>…ボタン1つで全員の席が決まります(スクリーンに映すと盛り上がります)<br>
@@ -657,10 +680,14 @@ p.pd{margin:0 0 14px; color:var(--muted); font-size:13.5px;}
         <ol>
           <li><b>先生の配慮設定</b>(指定席・離すペア)— 必ず守る</li>
           <li><b>男子席・女子席</b> — 原則守る</li>
-          <li><b>最近◯回の席がえで隣だった子と、なるべく隣にしない</b>(回数は🤝やくそくタブで変更。0にするとこのルールはオフ)</li>
+          <li><b>直近◯回のあいだに座った席には、また座らない</b>(初期は3回。回数は🤝やくそくタブで変更。0にすると、この下の「履歴系」もまとめてオフ)</li>
+          <li><b>隣になった回数が少ない人と隣にする</b>(このクラスの記録をぜんぶ見ます。直近◯回は特に強く避ける)</li>
+          <li><b>前の席から縦に2行以上動く</b>(後ろの席の子は前へ上がる)</li>
+          <li><b>前とちがう号車の席にする</b>(🤝やくそくタブでオン/オフ。号車を作っていないときは働きません。指定席の子などで同じ号車になっても仕方ないルールです)</li>
           <li><b>今の席から、なるべく遠くの席へ</b></li>
         </ol>
-        <p>全部を同時に守れないときは、下のルールからゆるめて席を決め、メッセージでお知らせします。</p>
+        <p>全部を同時に守れないときは、下のルールからゆるめて席を決めます(「同じ席になった子がいる」など大事なルールが守れなかったときだけ、メッセージでお知らせします)。</p>
+        <p>※「縦に2行以上動く」「別の号車になる」は、ほかのルールとぶつかると守れない子が出ます。年に何十回も席替えをするとぶつかる場面が増えますが、その場合は上のルールを優先します。</p>
         <p>💡「はんの なかだけ」を選ぶと、班のメンバーはそのままで班の中の席だけシャッフルできます。</p>
       </div>
     </details>
@@ -728,7 +755,7 @@ p.pd{margin:0 0 14px; color:var(--muted); font-size:13.5px;}
       </div>
     </details>
     </div>
-    <p class="hint" style="text-align:center;">せきがえ君 v2.5</p>
+    <p class="hint" style="text-align:center;">せきがえ君 v2.7</p>
   </section>
 </main>
 
@@ -756,9 +783,20 @@ const LS_KEY='sekigae-v2';
 const LS_KEY_OLD='sekigae-v1';
 const MAX_KIDS=45;
 const TEAMC=['#F1595C','#3E97D4','#E89B00','#2E9E77','#8F6FD0','#F07E3A','#F06E9C','#2FA9B8','#7CB342','#8D6E63'];
+const CARC=['#5B8DEF','#2FBF9B','#F5A623','#E56B8A','#9B6BE5','#4FB3D9','#8BC34A','#FF8A65','#26A69A','#BA68C8']; // 号車の色
+/* 席決めの優先順位(上ほど強い)。配慮・男女は1e6(必須)、以下は「なるべく」の減点:
+   直近◯回に座った席 > 隣になったことのある人 > 縦2行以上動く > 号車をかえる > 今の席から遠く */
+const SAME_SEAT_PEN=5000; // 直近◯回のあいだに座った席にまた座る子1人あたり(男女の次に強い)
+const HIST_UNIT=400;      // 隣になったことのある2人1組あたり(直近◯回は1回ぶん=400、それより前の記録は下の HIST_OLD 倍)
+const HIST_OLD=0.12;      // 直近◯回より前の記録の重み(回数の偏りをならすための弱い減点。重くしすぎると他のルールが働かなくなる)
+const ROW_PEN=450;        // 前の席から縦に2行以上動かなかった子1人あたり
+const CAR_PEN=200;        // 前と同じ号車に残った子1人あたり(いちばん弱い。指定席などで同じになっても仕方ない)
+const ANNEAL_ITER=100000, ANNEAL_T0=300; // 席決めの探索回数と、最初の「ゆらぎ」の大きさ(後半ほど小さくして落ち着かせる)
+/* 実測(36人・6×6・3号車・指定席2・男女席4・年35回のシミュレーション)での目安:
+   直近3回に座った席と同じ 0件 / 縦2行未満 約14% / 前回と同じ号車 約15% / 前回も隣だった組 約5組/回(ランダムだと約18組/回) / 1回0.15秒 */
 function defState(name){return {
   name:name||'クラス1',
-  grade:'low', fx:'gara', snd:'fun', bgmOn:true, bgmStyle:'wakuwaku', scope:'all', histDepth:3,
+  grade:'low', fx:'gara', snd:'fun', bgmOn:true, bgmStyle:'wakuwaku', scope:'all', histDepth:3, carRule:true,
   students:[], rows:5, cols:6, seats:{}, cons:[], history:[], current:null
 };}
 let DB={active:null,classes:{}};
@@ -819,16 +857,19 @@ add:['ついか','追加'],add2:['ついか','追加'],bulk:['まとめて と�
 rosterClear:['めいぼを ぜんぶ けす','名簿を全部消す'],
 layoutH:['ざせきの かたち','座席の形'],layoutD:['きょうしつに あわせて せきを つくります。へんしゅうモードを えらんで せきを タップ!','教室に合わせて席を作ります。編集モードを選んで席をタップ。'],
 rows:['たて','縦'],cols:['よこ','横'],
-emOnoff:['せき あり/なし','席あり/なし'],emFixed:['していせき','指定席'],emGender:['だんじょ','男女'],emTeam:['はん','班'],
+emOnoff:['せき あり/なし','席あり/なし'],emFixed:['していせき','指定席'],emGender:['だんじょ','男女'],emTeam:['はん','班'],emCar:['ごうしゃ','号車'],
+carAutoTxt:['れつごとに じどうで つくる:','列ごとに自動で作る:'],carAutoTxt2:['れつずつ','列ずつ'],carAuto:['⚡ じどうで つくる','⚡ 自動で作る'],
+carRule:['🚌 ごうしゃを かえる','🚌 号車をかえる'],carRuleOn:['オン','オン'],carRuleOff:['オフ','オフ'],
+carRuleHint:['オンにすると、まえと ちがう ごうしゃの せきに なるように します(「ざせき」タブの「ごうしゃ」で ごうしゃを つくっておく)。ほかの ルールが ゆうせんなので、おなじ ごうしゃに なる こも います。していせきの こは たいしょうがいです。','オンにすると、前とちがう号車の席になるようにします(先に「座席」タブの「号車」で号車を作っておきます)。他のルールが優先なので、同じ号車になる子もいます。指定席の子は対象外です。'],
 board:['こくばん','黒 板'],
 rulesH:['はいちの やくそく','配置の条件'],
 rulesD:['「このこと このこは はなす」などの はいりょを せっていします。していせき・だんじょの せきは「ざせき」タブで。','「この子とこの子は離す」などの配慮を設定します。指定席・男女席は「座席」タブで。'],
 rulesAdd:['はなす ペアを ついか','離すペアを追加'],and:['と','と'],
 ctAdj:['となりに しない(まわり1マス)','隣にしない(周囲1マス)'],ctDist:['きょりを してい','距離を指定'],
 vgap:['たてに','縦に'],hgap:['よこに','横に'],gapHint:['人ぶんより ちかくに しない','人分より近くにしない'],
-histRule:['まえに となりだった こ','以前隣だった子'],
-histRuleTxt:['さいきん','直近'],histRuleTxt2:['回の せきがえで となりだった こ とは、なるべく となりに しない','回の席替えで隣だった子とは、なるべく隣にしない'],
-histRuleHint:['※「ぜったい」ではなく「なるべく」です。せんせいの せっていが さいゆうせん。','※「絶対」ではなく「なるべく」です。先生の配慮設定が最優先。'],
+histRule:['まえに すわった せき・となりだった こ','以前の席・隣だった子'],
+histRuleTxt:['さいきん','直近'],histRuleTxt2:['回の せきがえで すわった せきには、もう すわらない。また、となりだった こ とは とくに つよく さける。それより まえの きろくも、となりに なった かいすうが すくない ひとを ゆうせんする','回の席替えで座った席には、もう座らないようにします。隣だった子とは特に強く避けます。それより前の記録も、隣になった回数が少ない人を優先します'],
+histRuleHint:['※「ぜったい」ではなく「なるべく」です。せんせいの せっていと だんじょの せきが さいゆうせん。0にすると この ルールは ぜんぶ オフ。','※「絶対」ではなく「なるべく」です。先生の配慮設定・男女席が最優先。0にするとこのルール(同じ席・隣の履歴)は全部オフになります。'],
 shufH:['せきがえ','席替え'],shufD:['じゅんびが できたら、ボタンを おしてね!','準備ができたら、ボタンを押してください。'],
 scope:['はんい:','範囲:'],scopeAll:['クラス ぜんいん','クラス全員'],scopeTeam:['はんの なかだけ','班の中だけ'],
 fx:['えんしゅつ:','演出:'],fxPlain:['シンプル','シンプル'],
@@ -1120,7 +1161,7 @@ function openClassModal(){
     if(copy){
       c.rows=S.rows;c.cols=S.cols;
       c.seats={};
-      Object.keys(S.seats).forEach(k=>{const o=S.seats[k];c.seats[k]={off:o.off||0,g:o.g||'',team:o.team||0,fix:null};});
+      Object.keys(S.seats).forEach(k=>{const o=S.seats[k];c.seats[k]={off:o.off||0,g:o.g||'',team:o.team||0,car:o.car||0,fix:null};});
     }
     DB.classes[id]=c;
     switchClass(id);
@@ -1228,11 +1269,13 @@ function renderRoster(){
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 
 /* ================= layout editor ================= */
-let editMode='onoff', teamSel=1;
+let editMode='onoff', teamSel=1, carSel=1, carCols=2;
 $('#editMode').addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;editMode=b.dataset.m;
   $$('#editMode button').forEach(x=>x.classList.toggle('on',x===b));
   $('#teamRow').style.display=editMode==='team'?'flex':'none';
+  $('#carRow').style.display=editMode==='car'?'flex':'none';
+  $('#carAutoRow').style.display=editMode==='car'?'flex':'none';
   renderLayout();
 });
 function step(idBase,get,set,min,max){
@@ -1256,6 +1299,33 @@ function renderTeamChips(){
   b0.addEventListener('click',()=>{teamSel=0;renderTeamChips();});
   w.appendChild(b0);
 }
+function renderCarChips(){
+  const w=$('#carChips');w.innerHTML='';
+  for(let t=1;t<=8;t++){
+    const b=document.createElement('button');b.className='teamChip'+(carSel===t?' on':'');
+    b.style.background=CARC[t-1]+'33';b.style.color=CARC[t-1];
+    b.textContent=t+(S.grade==='low'?'ごうしゃ':'号車');
+    b.addEventListener('click',()=>{carSel=t;renderCarChips();});
+    w.appendChild(b);
+  }
+  const b0=document.createElement('button');b0.className='teamChip'+(carSel===0?' on':'');
+  b0.textContent=S.grade==='low'?'ごうしゃを けす':'号車を消す';
+  b0.addEventListener('click',()=>{carSel=0;renderCarChips();});
+  w.appendChild(b0);
+}
+step('ca',()=>carCols,v=>{carCols=v;$('#caVal').textContent=v;},1,6);
+$('#carAuto').addEventListener('click',()=>{
+  const low=S.grade==='low';
+  let n=0;
+  for(let r=0;r<S.rows;r++)for(let c=0;c<S.cols;c++){
+    const k=key(r,c);
+    if(seatObj(k).off)continue;
+    setSeat(k,{car:Math.floor(c/carCols)+1});n++;
+  }
+  save();renderAll();
+  const cars=Math.ceil(S.cols/carCols);
+  toast(low?`${cars}こ の ごうしゃを つくったよ`:`${carCols}列ごとに${cars}つの号車を作りました`);
+});
 function seatEl(k,idx,opts){
   const o=seatObj(k), d=document.createElement('div');
   d.className='seat';
@@ -1267,8 +1337,11 @@ function seatEl(k,idx,opts){
   let inner='';
   if(!o.off&&idx>0)inner+=`<span class="no">${idx}</span>`;
   if(opts.edit&&o.g)inner+=`<span class="gmark" style="color:${o.g==='M'?'var(--sky)':'var(--pink)'}">${o.g==='M'?'男':'女'}</span>`;
-  if(o.team){inner+=`<span class="tmark" style="color:${TEAMC[o.team-1]}">${S.grade==='low'?'はん':'班'}${o.team}</span>`;
+  let marks='';
+  if(o.car&&!o.off)marks+=`<span class="cmark" style="background:${CARC[(o.car-1)%CARC.length]}">${o.car}${S.grade==='low'?'ごうしゃ':'号車'}</span>`;
+  if(o.team){marks+=`<span class="tmark" style="color:${TEAMC[o.team-1]}">${S.grade==='low'?'はん':'班'}${o.team}</span>`;
     d.style.borderColor=TEAMC[o.team-1]; d.style.background=TEAMC[o.team-1]+'1A';}
+  if(marks)inner+=`<span class="marks">${marks}</span>`;
   let nm='';
   if(opts.pos){ // display by positions map
     for(const sid in opts.pos){const p=opts.pos[sid];if(key(p[0],p[1])===k){const s2=opts.stuMap?opts.stuMap[sid]:stu(sid);if(s2)nm=s2.name;}}
@@ -1302,11 +1375,13 @@ function renderChartInto(el,opts){
 function renderLayout(){
   $('#rowVal').textContent=S.rows; $('#colVal').textContent=S.cols;
   renderTeamChips();
+  renderCarChips();
   const hints={
     onoff:['タップで せきを けしたり もどしたり できるよ','タップで席のあり/なしを切り替え'],
     fixed:['せきを タップして、そこに すわる こを えらぶよ','席をタップして、固定する児童を選択'],
     gender:['タップするたびに なし→男子→女子 と かわるよ','タップするたびに 指定なし→男子席→女子席 と切り替え'],
     team:['はんの いろを えらんでから せきを タップ','班を選んでから席をタップ'],
+    car:['ごうしゃを えらんでから せきを タップ。「じどうで つくる」なら れつごとに いっぺんに つくれるよ','号車を選んでから席をタップ。「自動で作る」なら列ごとに一度に作れます(例:2列ずつ→6列で3つの号車)'],
   };
   $('#editHint').textContent=hints[editMode][S.grade==='low'?0:1];
   renderChartInto($('#editGrid'),{edit:true,onTap:k=>{
@@ -1315,6 +1390,7 @@ function renderLayout(){
     else if(o.off){toast(S.grade==='low'?'この せきは「なし」だよ':'この席は「なし」です');return;}
     else if(editMode==='gender'){setSeat(k,{g:o.g===''||!o.g?'M':(o.g==='M'?'F':'')});}
     else if(editMode==='team'){setSeat(k,{team:teamSel});}
+    else if(editMode==='car'){setSeat(k,{car:carSel});}
     else if(editMode==='fixed'){pickFixed(k);return;}
     save();renderAll();
   }});
@@ -1352,7 +1428,12 @@ $('#consAdd').addEventListener('click',()=>{
   S.cons.push({a:a,b:b,vg:VG,hg:HG,adj:consT==='adj'});
   save();renderAll();toast(S.grade==='low'?'ついかしたよ':'追加しました');
 });
+$('#carRuleSeg').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  S.carRule=b.dataset.v==='1';save();renderRules();
+});
 function renderRules(){
+  $$('#carRuleSeg button').forEach(b=>b.classList.toggle('on',(b.dataset.v==='1')===(S.carRule!==false)));
   const selA=$('#consA'),selB=$('#consB');
   [selA,selB].forEach(sel=>{
     const cur=sel.value;sel.innerHTML='';
@@ -1374,11 +1455,17 @@ function renderRules(){
 }
 
 /* ================= solver ================= */
+/* 隣になったことのある2人の減点。年間(このクラスの全記録)を見て「回数が多い組ほど」重くする。
+   直近 histDepth 回は1回ぶんを強く数え、それより前の記録も弱く数える(=隣になった回数が少ない人が優先される)。
+   histDepth=0 なら履歴ルールは全部オフ。 */
 function histNeighborWeights(){
   const w={};
-  const H=S.history.slice(-S.histDepth);
+  const D=S.histDepth;
+  if(!D)return w;
+  const H=S.history;
   H.forEach((h,i)=>{
-    const weight=30+50*((i+1)/H.length); // recent = heavier
+    const age=H.length-1-i; // 0 = 直前の席替え
+    const weight=(age<D?1:HIST_OLD)*HIST_UNIT;
     const ids=Object.keys(h.pos||{});
     for(let x=0;x<ids.length;x++)for(let y=x+1;y<ids.length;y++){
       const p=h.pos[ids[x]],q=h.pos[ids[y]];
@@ -1397,7 +1484,7 @@ function computeAssignment(scope){
   if(kids.length>keys.length)return {err:(S.grade==='low'?'せきが たりないよ!「ざせき」タブで ふやしてね':'席が足りません。「座席」タブで増やしてください')};
   const pos={}; // k -> seat idx
   keys.forEach((k,i)=>pos[k]=i);
-  const seatArr=keys.map(k=>{const o=seatObj(k);const p=rc(k);return {k:k,r:p[0],c:p[1],g:o.g||'',fix:(o.fix&&stu(o.fix))?o.fix:null,team:o.team||0};});
+  const seatArr=keys.map(k=>{const o=seatObj(k);const p=rc(k);return {k:k,r:p[0],c:p[1],g:o.g||'',fix:(o.fix&&stu(o.fix))?o.fix:null,team:o.team||0,car:o.car||0};});
   const N=seatArr.length;
   const locked=new Array(N).fill(false);
   let assign=new Array(N).fill(null);
@@ -1446,56 +1533,133 @@ function computeAssignment(scope){
   const cur=S.current?S.current.pos||{}:{};
   const consList=S.cons.filter(c=>stu(c.a)&&stu(c.b));
   const maxD=S.rows+S.cols;
-  function fullScore(A){
-    let p=0;
-    const posOf={};
-    for(let i=0;i<N;i++){if(A[i])posOf[A[i]]=i;}
-    // gender hard
-    for(let i=0;i<N;i++){const sid=A[i];if(!sid)continue;const s=seatArr[i],kd=stu(sid);
-      if(s.g&&kd&&kd.g!==s.g)p+=1e6;}
-    // cons hard
-    for(const c of consList){
-      const ia=posOf[c.a],ib=posOf[c.b];
-      if(ia===undefined||ib===undefined)continue;
-      const dr=Math.abs(seatArr[ia].r-seatArr[ib].r),dc=Math.abs(seatArr[ia].c-seatArr[ib].c);
-      if(dr<c.vg&&dc<c.hg)p+=1e6;
-    }
-    // history neighbors soft
-    for(let i=0;i<N;i++){const a=A[i];if(!a)continue;
-      for(let j=i+1;j<N;j++){const b=A[j];if(!b)continue;
-        if(Math.abs(seatArr[i].r-seatArr[j].r)<=1&&Math.abs(seatArr[i].c-seatArr[j].c)<=1){
-          const kk=a<b?a+'|'+b:b+'|'+a;
-          if(hw[kk])p+=hw[kk];
-        }
+  // 号車ルール:前の席と同じ号車になった子に減点(全員シャッフルのときだけ。指定席の子は対象外)
+  const carOfCur={};
+  if(scope!=='team'&&S.carRule!==false&&S.current&&S.current.pos){
+    kids.forEach(kd=>{
+      const p=S.current.pos[kd.id];if(!p)return;
+      const so=seatObj(key(p[0],p[1]));
+      if(so.car&&!so.off)carOfCur[kd.id]=so.car;
+    });
+  }
+  const useCar=Object.keys(carOfCur).length>0&&seatArr.some(s=>s.car);
+  function carStayCount(A){
+    let n=0;
+    for(let i=0;i<N;i++){const sid=A[i];if(!sid||locked[i])continue;
+      if(carOfCur[sid]&&seatArr[i].car&&seatArr[i].car===carOfCur[sid])n++;}
+    return n;
+  }
+  // 直近◯回のあいだに座った席には、また座らない(男女の次に強い。全員シャッフルのときだけ。指定席の子は対象外)
+  const recentSeat={}; // 児童 → 直近◯回に座った席('行_列')の集まり
+  const D=S.histDepth;
+  if(scope!=='team'&&D>0){
+    const addSeat=(sid,p)=>{(recentSeat[sid]=recentSeat[sid]||new Set()).add(key(p[0],p[1]));};
+    S.history.slice(-D).forEach(h=>{for(const sid in (h.pos||{}))addSeat(sid,h.pos[sid]);});
+    if(S.current&&S.current.pos){for(const sid in S.current.pos)addSeat(sid,S.current.pos[sid]);}
+  }
+  const useSeatRule=Object.keys(recentSeat).length>0;
+  function sameSeatCount(A){
+    let n=0;
+    for(let i=0;i<N;i++){const sid=A[i];if(!sid||locked[i])continue;
+      const rs=recentSeat[sid];if(rs&&rs.has(seatArr[i].k))n++;}
+    return n;
+  }
+  // 前の席から縦に2行以上動く(後ろの席の子は前へ上がる)。全員シャッフルのときだけ。指定席の子と、そもそも2行動けない席の子は対象外
+  const rowRule=scope!=='team'&&Object.keys(cur).length>0;
+  const canRow=r=>Math.max(r,S.rows-1-r)>=2;
+  function rowStayCount(A){
+    let n=0;
+    for(let i=0;i<N;i++){const sid=A[i];if(!sid||locked[i])continue;const cp=cur[sid];if(!cp||!canRow(cp[0]))continue;
+      if(Math.abs(seatArr[i].r-cp[0])<=1)n++;}
+    return n;
+  }
+  /* ---- 席決めの探索(焼きなまし法) ----
+     2人の席を入れ替えては点数を見て、よければ採用する。1回の入れ替えで変わるのは「その2席」と「そのまわりの席」だけなので、
+     全員ぶんを計算し直さず、変わった部分だけを計算する(差分計算)。これで探索回数を大きく増やせる。 */
+  const M=kids.length;
+  const idxOfKid={};kids.forEach((kd,ix)=>{idxOfKid[kd.id]=ix;});
+  const nbrAll=seatArr.map((s,i)=>{const out=[];   // 席ごとの「となり(周囲1マス)」の席
+    for(let j=0;j<N;j++){if(j!==i&&Math.abs(s.r-seatArr[j].r)<=1&&Math.abs(s.c-seatArr[j].c)<=1)out.push(j);}
+    return out;});
+  // 児童×席ごとの減点表 U[児童*N+席]:男女(必須)・直近に座った席・縦2行・号車・今の席からの遠さ
+  const U=new Float64Array(M*N);
+  for(let s=0;s<M;s++){
+    const kd=kids[s],sid=kd.id,cp=cur[sid],rs=recentSeat[sid];
+    const cpRowOk=rowRule&&cp&&canRow(cp[0]);
+    for(let i=0;i<N;i++){
+      const st=seatArr[i];let u=0;
+      if(st.g&&kd.g&&kd.g!==st.g)u+=1e6;
+      if(cp){const d=Math.abs(st.r-cp[0])+Math.abs(st.c-cp[1]);u+=Math.max(0,maxD-d)*2;}
+      if(!locked[i]){
+        if(useSeatRule&&rs&&rs.has(st.k))u+=SAME_SEAT_PEN;
+        if(cpRowOk&&Math.abs(st.r-cp[0])<=1)u+=ROW_PEN;
+        if(useCar&&carOfCur[sid]&&st.car&&st.car===carOfCur[sid])u+=CAR_PEN;
       }
+      U[s*N+i]=u;
     }
-    // distance from current soft
-    for(let i=0;i<N;i++){const sid=A[i];if(!sid)continue;const cp=cur[sid];if(!cp)continue;
-      const d=Math.abs(seatArr[i].r-cp[0])+Math.abs(seatArr[i].c-cp[1]);
-      p+=Math.max(0,maxD-d)*2;
-    }
-    return p;
+  }
+  // 隣になったことのある2人の減点表 HW[児童*M+児童]
+  const HW=new Float64Array(M*M);
+  for(const kk in hw){const ab=kk.split('|');const ia=idxOfKid[ab[0]],ib=idxOfKid[ab[1]];
+    if(ia!==undefined&&ib!==undefined){HW[ia*M+ib]=hw[kk];HW[ib*M+ia]=hw[kk];}}
+  // 離すペア(必須)
+  const consIdx=consList.map(c=>({a:idxOfKid[c.a],b:idxOfKid[c.b],vg:c.vg,hg:c.hg})).filter(c=>c.a!==undefined&&c.b!==undefined);
+  const consOf=Array.from({length:M},()=>[]);
+  consIdx.forEach((c,ci)=>{consOf[c.a].push(ci);consOf[c.b].push(ci);});
+  const consAll=consIdx.map((c,ci)=>ci), EMPTY=[];
+  const posOf=new Int16Array(M); // 児童 → いま座っている席(なければ-1)
+  const un=(s,i)=>s<0?0:U[s*N+i];
+  const pc=(s,t)=>(s<0||t<0)?0:HW[s*M+t];
+  function consViol(list){
+    let v=0;
+    for(let q=0;q<list.length;q++){const c=consIdx[list[q]];const ia=posOf[c.a],ib=posOf[c.b];if(ia<0||ib<0)continue;
+      if(Math.abs(seatArr[ia].r-seatArr[ib].r)<c.vg&&Math.abs(seatArr[ia].c-seatArr[ib].c)<c.hg)v+=1e6;}
+    return v;
+  }
+  // 席i・席jに関係する部分の点数(2人の減点+まわりの席との隣の履歴+離すペア)
+  function localCost(A,i,j,list){
+    const a=A[i],b=A[j];
+    let s=un(a,i)+un(b,j);
+    const ni=nbrAll[i],nj=nbrAll[j];
+    for(let q=0;q<ni.length;q++){const n=ni[q];if(n!==j)s+=pc(a,A[n]);}
+    for(let q=0;q<nj.length;q++){const m=nj[q];if(m!==i)s+=pc(b,A[m]);}
+    if(list.length)s+=consViol(list);
+    return s;
+  }
+  function fullScoreIdx(A){
+    let p=0;
+    for(let i=0;i<N;i++){const a=A[i];p+=un(a,i);if(a<0)continue;
+      const nb=nbrAll[i];for(let q=0;q<nb.length;q++){const n=nb[q];if(n>i)p+=pc(a,A[n]);}}
+    return p+consViol(consAll);
   }
   function annealOnce(A0){
-    let A=A0.slice(), sc=fullScore(A);
-    let best=A.slice(), bestSc=sc;
-    const ITER=3500;
-    for(let it=0;it<ITER;it++){
+    const A=A0.map(id=>(id&&idxOfKid[id]!==undefined)?idxOfKid[id]:-1); // 席→児童番号(空席は-1)
+    posOf.fill(-1);for(let i=0;i<N;i++){if(A[i]>=0)posOf[A[i]]=i;}
+    let sc=fullScoreIdx(A);
+    let best=A.slice(),bestSc=sc;
+    const ITER=ANNEAL_ITER, cool=Math.pow(0.01,1/ITER);
+    let temp=ANNEAL_T0;
+    for(let it=0;it<ITER;it++,temp=Math.max(2,temp*cool)){ // 最初は大きく入れ替えを許し、だんだん厳しく(300→3)
       const grp=pool[Math.floor(Math.random()*pool.length)];
       if(grp.length<2)continue;
       const i=grp[Math.floor(Math.random()*grp.length)];
-      let j=grp[Math.floor(Math.random()*grp.length)];
+      const j=grp[Math.floor(Math.random()*grp.length)];
       if(i===j)continue;
-      [A[i],A[j]]=[A[j],A[i]];
-      const ns=fullScore(A);
-      const temp=Math.max(1,60*(1-it/ITER));
-      if(ns<=sc||Math.random()<Math.exp((sc-ns)/temp)){sc=ns;if(sc<bestSc){bestSc=sc;best=A.slice();}}
-      else{[A[i],A[j]]=[A[j],A[i]];}
+      const a=A[i],b=A[j];
+      if(a===b)continue; // どちらも空席
+      let list=EMPTY;
+      if(consIdx.length){list=[];if(a>=0)for(const x of consOf[a])list.push(x);if(b>=0)for(const x of consOf[b])if(list.indexOf(x)<0)list.push(x);}
+      const lb=localCost(A,i,j,list);
+      A[i]=b;A[j]=a;if(a>=0)posOf[a]=j;if(b>=0)posOf[b]=i;
+      const d=localCost(A,i,j,list)-lb;
+      if(d<=0||Math.random()<Math.exp(-d/temp)){sc+=d;if(sc<bestSc-1e-6){bestSc=sc;best=A.slice();}}
+      else{A[i]=a;A[j]=b;if(a>=0)posOf[a]=i;if(b>=0)posOf[b]=j;}
     }
-    return {A:best,sc:bestSc};
+    posOf.fill(-1);for(let i=0;i<N;i++){if(best[i]>=0)posOf[best[i]]=i;}
+    return {A:best.map(s=>s<0?null:kids[s].id),sc:fullScoreIdx(best)}; // 最後に点数を正確に計算し直す
   }
   let best=null;
-  const tries=scope==='team'?3:4;
+  const tries=scope==='team'?3:((useCar||rowRule||useSeatRule)?5:3);
   for(let t=0;t<tries;t++){
     let A0;
     if(scope==='team')A0=assign.slice();
@@ -1509,14 +1673,27 @@ function computeAssignment(scope){
     }
     const r=annealOnce(A0);
     if(!best||r.sc<best.sc)best=r;
-    if(best.sc<1e6&&t>=1)break;
+    // 十分よい配置(必須ルール違反なし・同じ席なし・全員2行以上動いた)が2回以上で得られたら終了。
+    // 号車は「同じになっても仕方ない」ルールなので、終了条件には入れない(点数では考慮される)
+    if(best.sc<1e6&&(!useSeatRule||sameSeatCount(best.A)===0)&&(!rowRule||rowStayCount(best.A)===0)&&t>=1)break;
   }
+  const carStay=useCar?carStayCount(best.A):0;
+  const sameSeat=useSeatRule?sameSeatCount(best.A):0;
   const warn=best.sc>=1e6?(S.grade==='low'?'ぜんぶの やくそくは まもれなかったよ。せってい を みなおしてね':'すべての条件を満たす配置が見つかりませんでした(一部の条件が守られていない可能性があります)'):null;
   // build result maps
   const asg={},posMap={},numOf={};
   best.A.forEach((sid,i)=>{if(sid){asg[seatArr[i].k]=sid;posMap[sid]=[seatArr[i].r,seatArr[i].c];numOf[sid]=i+1;}});
   // seat numbers = enabled order index+1 (seatArr is in reading order)
-  return {asg:asg,pos:posMap,numOf:numOf,warn:warn};
+  return {asg:asg,pos:posMap,numOf:numOf,warn:warn,carStay:carStay,sameSeat:sameSeat};
+}
+/* 席決めの結果に注意が必要なときだけ、先生向けにメッセージを出す
+   (号車が同じになるのは「仕方ない」ので通知しない。同じ席は大事なルールなので、守れなかったときだけ知らせる) */
+function notifyResult(res){
+  if(res.warn){toast(res.warn);return;}
+  if(res.sameSeat>0){
+    const low=S.grade==='low';
+    toast(low?`ちょっとまえに すわった せきと おなじに なった こが ${res.sameSeat}にん いるよ`:`直近に座った席と同じになった子が${res.sameSeat}人います(配慮設定などの都合)`);
+  }
 }
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 
@@ -1604,14 +1781,14 @@ let kuji=null; // {res, drawn:{}, scope}
 $('#btnBatch').addEventListener('click',()=>{
   const res=computeAssignment(S.scope);
   if(res.err){toast(res.err);return;}
-  if(res.warn)toast(res.warn);
+  notifyResult(res);
   openStage(S.grade==='low'?'せきがえ ちゅう…':'席替え中…','');
   fxPlay(S.fx,()=>revealChart(res));
 });
 $('#btnKuji').addEventListener('click',()=>{
   const res=computeAssignment(S.scope);
   if(res.err){toast(res.err);return;}
-  if(res.warn)toast(res.warn);
+  notifyResult(res);
   kuji={res:res,drawn:{}};
   $('#kujiArea').style.display='block';
   renderKuji();
@@ -1686,7 +1863,7 @@ function revealChart(res){
       stageBtn(low?'🔁 やりなおす':'🔁 やり直す','',()=>{
         const r2=computeAssignment(S.scope);
         if(r2.err){toast(r2.err);return;}
-        if(r2.warn)toast(r2.warn);
+        notifyResult(r2);
         $('#stageBtns').innerHTML='';
         revealChart(r2);
       });
@@ -1855,6 +2032,10 @@ function drawHist(h,W,H){
       ctx.fillText(nm,x+cw/2,y+ch/2+fs/3+6*sc);
     }
     // 記録の画像も子どもの目に触れるため、男女の表示は入れない(指定席の子との見た目の不自然さを避ける)
+    if(o.car){ // 号車ラベル(左下)
+      ctx.fillStyle=CARC[(o.car-1)%CARC.length];ctx.font='bold '+Math.round(15*sc)+'px sans-serif';ctx.textAlign='left';
+      ctx.fillText(o.car+'号車',x+8*sc,y+ch-8*sc);
+    }
   }
   return cv;
 }
