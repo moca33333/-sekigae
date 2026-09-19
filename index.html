@@ -105,6 +105,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:3px solid v
   color:var(--muted); position:relative; top:3px;
 }
 .tab .tico{margin-right:4px;}
+.tab.dot::after{content:''; position:absolute; top:5px; right:6px; width:9px; height:9px; border-radius:50%; background:var(--red);}
 .tab.on{color:var(--ink); border-color:var(--line2); background:var(--paper); top:0; padding-bottom:10px;}
 main{padding:16px 14px 60px; max-width:1080px; margin:0 auto;}
 section.pane{display:none;}
@@ -602,6 +603,11 @@ p.pd{margin:0 0 14px; color:var(--muted); font-size:13.5px;}
   <section class="pane" id="pane-settings">
     <h2 class="ph" data-k="setH">せってい</h2>
     <p class="pd"> </p>
+    <div class="card" id="noticeCard" style="display:none;">
+      <h3 data-k="setNotice">📋 席替えの注意(先生用)</h3>
+      <p class="hint" data-k="setNoticeHint">大事なルールを守れなかった席替えがあると、ここに残ります。子どもの画面には出ません。</p>
+      <div class="consList" id="noticeList"></div>
+    </div>
     <div class="card">
       <h3 data-k="setSnd">音</h3>
       <div class="row">
@@ -686,7 +692,7 @@ p.pd{margin:0 0 14px; color:var(--muted); font-size:13.5px;}
           <li><b>前とちがう号車の席にする</b>(🤝やくそくタブでオン/オフ。号車を作っていないときは働きません。指定席の子などで同じ号車になっても仕方ないルールです)</li>
           <li><b>今の席から、なるべく遠くの席へ</b></li>
         </ol>
-        <p>全部を同時に守れないときは、下のルールからゆるめて席を決めます(「同じ席になった子がいる」など大事なルールが守れなかったときだけ、メッセージでお知らせします)。</p>
+        <p>全部を同時に守れないときは、下のルールからゆるめて席を決めます(「同じ席になった子がいる」など大事なルールが守れなかったときは、子どもの画面には出さず、⚙️せっていの「席替えの注意」に名前つきで残します。見ていない注意があると、せっていタブに赤い点が付きます)。</p>
         <p>※「縦に2行以上動く」「別の号車になる」は、ほかのルールとぶつかると守れない子が出ます。年に何十回も席替えをするとぶつかる場面が増えますが、その場合は上のルールを優先します。</p>
         <p>💡「はんの なかだけ」を選ぶと、班のメンバーはそのままで班の中の席だけシャッフルできます。</p>
       </div>
@@ -755,7 +761,7 @@ p.pd{margin:0 0 14px; color:var(--muted); font-size:13.5px;}
       </div>
     </details>
     </div>
-    <p class="hint" style="text-align:center;">せきがえ君 v2.7</p>
+    <p class="hint" style="text-align:center;">せきがえ君 v2.8</p>
   </section>
 </main>
 
@@ -890,6 +896,8 @@ expShare:['📤 きょうゆうして おくる','📤 共有して送る'],
 shareHint:['💡 たんまつを かえるときは「きょうゆうして おくる」が おすすめです。LINEやメールなどに その場で おくれます。おくった さきの たんまつで ひらいて ほぞんし、「バックアップを よみこむ」で えらべば かんりょうです。','💡 端末を変えるときは「共有して送る」がおすすめです。LINEやメール、AirDropなどにその場で送れます。送った先の端末で開いて保存し、「バックアップを読み込む」で選べば完了です。'],
 setDanger:['データの さくじょ','データの削除'],clearHist:['このクラスの きろくを ぜんぶ けす','このクラスの記録を全部消す'],clearAll:['このクラスの データを ぜんぶ けす','このクラスのデータを全部消す'],
 setCls:['クラスの かんり','クラスの管理'],
+setNotice:['📋 せきがえの ちゅうい(せんせいよう)','📋 席替えの注意(先生用)'],
+setNoticeHint:['だいじな やくそくを まもれなかった せきがえが あると、ここに のこります。こどもの がめんには でません。','大事なルールを守れなかった席替えがあると、ここに残ります(新しい順に10件まで)。子どもの画面には出ません。'],
 setClsHint:['あたらしい ねんども、まえの きろくを のこしたまま つかえるよ。うえの 🏫ボタンからも ひらけます。','新年度になったら新しいクラスを追加すれば、前の年度の記録を残したまま使えます。画面上部の🏫ボタンからも開けます。'],
 setClsBtn:['🏫 クラスの きりかえ・ついか','🏫 クラスの切り替え・追加'],
 };
@@ -1102,6 +1110,7 @@ $$('#tabs .tab').forEach(b=>b.addEventListener('click',()=>{
   $$('section.pane').forEach(p=>p.classList.remove('on'));
   $('#pane-'+b.dataset.pane).classList.add('on');
   renderAll();
+  if(b.dataset.pane==='settings'){S.noticeSeen=new Date().toISOString();save();renderNotices();} // 注意を見たことにする
 }));
 
 /* ================= grade switch ================= */
@@ -1558,12 +1567,13 @@ function computeAssignment(scope){
     if(S.current&&S.current.pos){for(const sid in S.current.pos)addSeat(sid,S.current.pos[sid]);}
   }
   const useSeatRule=Object.keys(recentSeat).length>0;
-  function sameSeatCount(A){
-    let n=0;
+  function sameSeatList(A){ // 直近に座った席と同じになった子(指定席の子は除く)
+    const out=[];
     for(let i=0;i<N;i++){const sid=A[i];if(!sid||locked[i])continue;
-      const rs=recentSeat[sid];if(rs&&rs.has(seatArr[i].k))n++;}
-    return n;
+      const rs=recentSeat[sid];if(rs&&rs.has(seatArr[i].k))out.push(sid);}
+    return out;
   }
+  function sameSeatCount(A){return sameSeatList(A).length;}
   // 前の席から縦に2行以上動く(後ろの席の子は前へ上がる)。全員シャッフルのときだけ。指定席の子と、そもそも2行動けない席の子は対象外
   const rowRule=scope!=='team'&&Object.keys(cur).length>0;
   const canRow=r=>Math.max(r,S.rows-1-r)>=2;
@@ -1678,22 +1688,14 @@ function computeAssignment(scope){
     if(best.sc<1e6&&(!useSeatRule||sameSeatCount(best.A)===0)&&(!rowRule||rowStayCount(best.A)===0)&&t>=1)break;
   }
   const carStay=useCar?carStayCount(best.A):0;
-  const sameSeat=useSeatRule?sameSeatCount(best.A):0;
+  const sameSeatIds=useSeatRule?sameSeatList(best.A):[];
+  const sameSeat=sameSeatIds.length;
   const warn=best.sc>=1e6?(S.grade==='low'?'ぜんぶの やくそくは まもれなかったよ。せってい を みなおしてね':'すべての条件を満たす配置が見つかりませんでした(一部の条件が守られていない可能性があります)'):null;
   // build result maps
   const asg={},posMap={},numOf={};
   best.A.forEach((sid,i)=>{if(sid){asg[seatArr[i].k]=sid;posMap[sid]=[seatArr[i].r,seatArr[i].c];numOf[sid]=i+1;}});
   // seat numbers = enabled order index+1 (seatArr is in reading order)
-  return {asg:asg,pos:posMap,numOf:numOf,warn:warn,carStay:carStay,sameSeat:sameSeat};
-}
-/* 席決めの結果に注意が必要なときだけ、先生向けにメッセージを出す
-   (号車が同じになるのは「仕方ない」ので通知しない。同じ席は大事なルールなので、守れなかったときだけ知らせる) */
-function notifyResult(res){
-  if(res.warn){toast(res.warn);return;}
-  if(res.sameSeat>0){
-    const low=S.grade==='low';
-    toast(low?`ちょっとまえに すわった せきと おなじに なった こが ${res.sameSeat}にん いるよ`:`直近に座った席と同じになった子が${res.sameSeat}人います(配慮設定などの都合)`);
-  }
+  return {asg:asg,pos:posMap,numOf:numOf,warn:warn,carStay:carStay,sameSeat:sameSeat,sameSeatIds:sameSeatIds};
 }
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 
@@ -1781,14 +1783,12 @@ let kuji=null; // {res, drawn:{}, scope}
 $('#btnBatch').addEventListener('click',()=>{
   const res=computeAssignment(S.scope);
   if(res.err){toast(res.err);return;}
-  notifyResult(res);
   openStage(S.grade==='low'?'せきがえ ちゅう…':'席替え中…','');
   fxPlay(S.fx,()=>revealChart(res));
 });
 $('#btnKuji').addEventListener('click',()=>{
   const res=computeAssignment(S.scope);
   if(res.err){toast(res.err);return;}
-  notifyResult(res);
   kuji={res:res,drawn:{}};
   $('#kujiArea').style.display='block';
   renderKuji();
@@ -1863,7 +1863,6 @@ function revealChart(res){
       stageBtn(low?'🔁 やりなおす':'🔁 やり直す','',()=>{
         const r2=computeAssignment(S.scope);
         if(r2.err){toast(r2.err);return;}
-        notifyResult(r2);
         $('#stageBtns').innerHTML='';
         revealChart(r2);
       });
@@ -1876,6 +1875,11 @@ function confirmAssign(res){
   const names={};
   Object.keys(res.pos).forEach(sid=>{const st2=stu(sid);if(st2)names[sid]=st2.name;});
   const entry={date:new Date().toISOString(),pos:res.pos,rows:S.rows,cols:S.cols,seats:seatsSnap,names:names};
+  // 大事なルールが守れなかったときは、子どもの画面には出さず、先生用の記録(せってい内)に残す
+  const notes={};
+  if(res.sameSeatIds&&res.sameSeatIds.length)notes.sameSeat=res.sameSeatIds.map(id=>names[id]||'?');
+  if(res.warn)notes.warn=1;
+  if(Object.keys(notes).length)entry.notes=notes;
   try{entry.img=drawHist(entry,1200,900).toDataURL('image/jpeg',0.78);}catch(e){}
   S.history.push(entry);
   S.current={pos:res.pos};
@@ -2061,7 +2065,28 @@ $('#sndTest').addEventListener('click',()=>{
   sndResult();
   toast('🔔 音を鳴らしました。聞こえないときは本体の音量・消音スイッチ・イヤホンを確認してください');
 });
+/* 先生用の「席替えの注意」:大事なルールが守れなかった席替えを、名前つきで残す(子どもの画面には出さない) */
+function renderNotices(){
+  const low=S.grade==='low';
+  const items=S.history.map((h,i)=>({h:h,i:i})).filter(x=>x.h.notes).reverse().slice(0,10);
+  const card=$('#noticeCard');
+  card.style.display=items.length?'block':'none';
+  const L=$('#noticeList');L.innerHTML='';
+  items.forEach(x=>{
+    const n=x.h.notes;const parts=[];
+    if(n.sameSeat&&n.sameSeat.length)parts.push((low?'ちょっとまえに すわった せきと おなじ:':'直近に座った席と同じになった子:')+n.sameSeat.map(esc).join('、'));
+    if(n.warn)parts.push(low?'ぜんぶの やくそくは まもれませんでした':'一部の条件を守れませんでした(「ざせき」「やくそく」の設定を見直してください)');
+    const d=document.createElement('div');d.className='consRow';
+    d.innerHTML=`<span class="desc">📅 ${fmtDate(x.h.date)}<br>${parts.join('<br>')}</span>`;
+    L.appendChild(d);
+  });
+  // 見ていない注意があれば、「せってい」タブに小さな赤い点を付ける(開くと消える)
+  const unread=S.history.some(h=>h.notes&&(!S.noticeSeen||h.date>S.noticeSeen));
+  const tab=document.querySelector('#tabs [data-pane="settings"]');
+  if(tab)tab.classList.toggle('dot',unread);
+}
 function renderSettings(){
+  renderNotices();
   $$('#sndSeg button').forEach(b=>b.classList.toggle('on',b.dataset.s===S.snd));
   $$('#bgmSeg button').forEach(b=>b.classList.toggle('on',b.dataset.b===(S.bgmStyle||'wakuwaku')));
   $('#gLow').classList.toggle('on',S.grade==='low');
