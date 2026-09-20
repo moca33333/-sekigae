@@ -628,6 +628,9 @@ p.pd{margin:0 0 14px; color:var(--muted); font-size:13.5px;}
       </div>
       <p class="hint">BGMのオン/オフは画面右上の🎵ボタン。効果音・BGMともに「なし」にすると鳴りません。<br>
       🔇音が鳴らないときのチェック:①本体横の消音スイッチ ②本体横の音量ボタンで音量アップ(着信音量とは別の「メディア音量」です) ③Bluetoothイヤホンにつながっていないか ④「おとのテスト」を押して確認</p>
+      <p class="hint"><b>「おとのテスト」の聞き方:</b>押すと「ピン」(アプリの音)のあと「ポン」(別の経路の音)が鳴ります。<br>
+      ・両方聞こえる → 正常です ／ ・ポンだけ聞こえる → アプリの音だけが止められています(消音スイッチが原因のことが多い) ／ ・どちらも聞こえない → 本体の音量・イヤホン・ブラウザの設定を確認</p>
+      <p class="hint" id="sndDiag" style="word-break:break-all;"></p>
     </div>
     <div class="card">
       <h3 data-k="setCls">クラスのかんり</h3>
@@ -761,7 +764,7 @@ p.pd{margin:0 0 14px; color:var(--muted); font-size:13.5px;}
       </div>
     </details>
     </div>
-    <p class="hint" style="text-align:center;">せきがえ君 v2.8</p>
+    <p class="hint" style="text-align:center;">せきがえ君 v2.9</p>
   </section>
 </main>
 
@@ -937,18 +940,41 @@ let SFX=null;
 function sfxNode(){const a=ac();if(!SFX){SFX=a.createGain();SFX.gain.value=1;SFX.connect(a.destination);}return SFX;}
 function sfxKill(){if(SFX){try{SFX.disconnect();}catch(e){}SFX=null;}}
 /* iOS: audio must be unlocked inside the first real user gesture */
-function unlockAudio(){
-  try{
-    const a=ac();
-    const b=a.createBuffer(1,1,22050);
-    const s=a.createBufferSource();s.buffer=b;s.connect(a.destination);s.start(0);
-  }catch(e){}
-  bgmStart();
-  document.removeEventListener('touchend',unlockAudio);
-  document.removeEventListener('click',unlockAudio);
+/* --- iPhone/iPad対策 ---
+   ① 消音スイッチ(マナーモード)が入っていても鳴るよう、音声セッションを「再生用(playback)」にする(iOS 16.4以降のAPI)
+   ② それが使えない古いiOSでは、無音のaudio要素をループ再生しておく(消音スイッチをすり抜ける定番の方法)
+   ③ 画面をタップするたびに、止まっている音(suspended/interrupted)を再開する(アプリ切替・画面ロック後に鳴らなくなるため) */
+function makeWavBlob(seconds,freq,vol){ // 16bit・モノラルのWAVを作る(freq=0なら無音)
+  const rate=8000,n=Math.floor(rate*seconds),buf=new ArrayBuffer(44+n*2),v=new DataView(buf);
+  const w=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i));};
+  w(0,'RIFF');v.setUint32(4,36+n*2,true);w(8,'WAVE');w(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);
+  v.setUint32(24,rate,true);v.setUint32(28,rate*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,'data');v.setUint32(40,n*2,true);
+  for(let i=0;i<n;i++){const env=Math.min(1,i/200,(n-i)/400);v.setInt16(44+i*2,freq?Math.sin(2*Math.PI*freq*i/rate)*32767*vol*env:0,true);}
+  return new Blob([buf],{type:'audio/wav'});
 }
-document.addEventListener('touchend',unlockAudio);
-document.addEventListener('click',unlockAudio);
+function setAudioSession(){try{if(navigator.audioSession)navigator.audioSession.type='playback';}catch(e){}}
+setAudioSession();
+let silentEl=null,audioUnlocked=false;
+function unlockOnce(){
+  if(audioUnlocked)return;audioUnlocked=true;
+  try{const a=ac();const b=a.createBuffer(1,1,22050);const s=a.createBufferSource();s.buffer=b;s.connect(a.destination);s.start(0);}catch(e){}
+  if(!navigator.audioSession){ // 古いiOS向け
+    try{silentEl=new Audio(URL.createObjectURL(makeWavBlob(1,0,0)));silentEl.loop=true;const p=silentEl.play();if(p&&p.catch)p.catch(()=>{});}catch(e){}
+  }
+  bgmStart();
+}
+function audioGesture(){
+  setAudioSession();
+  try{const a=ac();if(a.state!=='running'){const p=a.resume();if(p&&p.then)p.then(()=>{if(S.bgmOn&&S.snd!=='off')bgmStart();}).catch(()=>{});}}catch(e){}
+  unlockOnce();
+}
+// iOSは touchend / click でしか音を有効にできない。何度でも実行して、止まった音を再開する
+['touchend','click','keydown'].forEach(ev=>document.addEventListener(ev,audioGesture,{passive:true}));
+function audioDiag(){
+  const st=AC?AC.state:'まだ作られていません';
+  const ses=navigator.audioSession?navigator.audioSession.type:'この端末は非対応(古い方式で対応)';
+  return `音の状態: ${st} / 音声セッション: ${ses} / 効果音: ${S.snd} / BGM: ${S.bgmOn?'オン':'オフ'}`;
+}
 
 /* ================= BGM ================= */
 const midiF=m=>440*Math.pow(2,(m-69)/12);
@@ -1028,7 +1054,10 @@ function bgmDuck(d){
   if(!bgm.gain)return;
   try{const a=ac();bgm.gain.gain.cancelScheduledValues(a.currentTime);bgm.gain.gain.setTargetAtTime(d?0.05:1,a.currentTime,0.18);}catch(e){}
 }
-document.addEventListener('visibilitychange',()=>{if(document.hidden)bgmStop();else bgmApply();});
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden)bgmStop();
+  else{try{if(AC&&AC.state!=='running')AC.resume();}catch(e){}bgmApply();}
+});
 function updateBgmBtn(){const b=$('#bgmBtn');b.textContent=S.bgmOn?'🎵':'🎵ﾅｼ';b.style.opacity=S.bgmOn?'1':'.5';}
 $('#bgmBtn').addEventListener('click',()=>{
   S.bgmOn=!S.bgmOn;save();bgmApply();updateBgmBtn();
@@ -2062,8 +2091,14 @@ $('#bgmSeg').addEventListener('click',e=>{
 });
 $('#sndTest').addEventListener('click',()=>{
   if(S.snd==='off'){toast('音の設定が「なし」になっています。「にぎやか」か「おちつき」を選んでください');return;}
-  sndResult();
-  toast('🔔 音を鳴らしました。聞こえないときは本体の音量・消音スイッチ・イヤホンを確認してください');
+  audioGesture();
+  // ピン=Web Audio(アプリの音はこれ)。0.9秒後にポン=通常のaudio要素(別の経路)。どちらが聞こえたかで原因が分かる
+  tone(1320,0.35,'sine',0.25);
+  setTimeout(()=>{
+    try{const el=new Audio(URL.createObjectURL(makeWavBlob(0.4,660,0.6)));const p=el.play();if(p&&p.catch)p.catch(()=>{});}catch(e){}
+  },900);
+  $('#sndDiag').textContent=audioDiag();
+  toast('🔔 ピン→ポンの順に鳴らしました');
 });
 /* 先生用の「席替えの注意」:大事なルールが守れなかった席替えを、名前つきで残す(子どもの画面には出さない) */
 function renderNotices(){
