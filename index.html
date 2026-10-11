@@ -690,9 +690,9 @@ p.pd{margin:0 0 14px; color:var(--muted); font-size:13.5px;}
           <li><b>先生の配慮設定</b>(指定席・離すペア)— 必ず守る</li>
           <li><b>男子席・女子席</b> — 原則守る</li>
           <li><b>直近◯回のあいだに座った席には、また座らない</b>(初期は3回。回数は🤝やくそくタブで変更。0にすると、この下の「履歴系」もまとめてオフ)</li>
-          <li><b>隣になった回数が少ない人と隣にする</b>(このクラスの記録をぜんぶ見ます。直近◯回は特に強く避ける)</li>
-          <li><b>前の席から縦に2行以上動く</b>(後ろの席の子は前へ上がる)</li>
-          <li><b>前とちがう号車の席にする</b>(🤝やくそくタブでオン/オフ。号車を作っていないときは働きません。指定席の子などで同じ号車になっても仕方ないルールです)</li>
+          <li><b>隣になった回数・同じ号車になった回数が少ない人にする</b>(このクラスの記録をぜんぶ見ます。直近◯回は特に強く避ける。「前に同じ号車だった2人が、また同じ号車になる」のもこれで避けます。※号車が3つで1号車12人などの場合、算数の都合でどうしても3割ほどは以前の仲間と重なります。それでも何もしないより重ならないようにはしています)</li>
+          <li><b>前の席から縦に2行以上動き、列(横)も変わる</b>(後ろの席の子は前へ上がる。縦だけ動いて同じ列のまま、ということがないようにします)</li>
+          <li><b>前とちがう号車の席にする</b>(1人ずつのチェック。🤝やくそくタブでオン/オフ。号車を作っていないときは働きません。指定席の子などで同じ号車になっても仕方ないルールです)</li>
           <li><b>今の席から、なるべく遠くの席へ</b></li>
         </ol>
         <p>全部を同時に守れないときは、下のルールからゆるめて席を決めます(「同じ席になった子がいる」など大事なルールが守れなかったときは、子どもの画面には出さず、⚙️せっていの「席替えの注意」に名前つきで残します。見ていない注意があると、せっていタブに赤い点が付きます)。</p>
@@ -764,7 +764,7 @@ p.pd{margin:0 0 14px; color:var(--muted); font-size:13.5px;}
       </div>
     </details>
     </div>
-    <p class="hint" style="text-align:center;">せきがえ君 v2.9</p>
+    <p class="hint" style="text-align:center;">せきがえ君 v3.1</p>
   </section>
 </main>
 
@@ -793,12 +793,18 @@ const LS_KEY_OLD='sekigae-v1';
 const MAX_KIDS=45;
 const TEAMC=['#F1595C','#3E97D4','#E89B00','#2E9E77','#8F6FD0','#F07E3A','#F06E9C','#2FA9B8','#7CB342','#8D6E63'];
 const CARC=['#5B8DEF','#2FBF9B','#F5A623','#E56B8A','#9B6BE5','#4FB3D9','#8BC34A','#FF8A65','#26A69A','#BA68C8']; // 号車の色
-/* 席決めの優先順位(上ほど強い)。配慮・男女は1e6(必須)、以下は「なるべく」の減点:
-   直近◯回に座った席 > 隣になったことのある人 > 縦2行以上動く > 号車をかえる > 今の席から遠く */
+/* 席決めの優先順位(上ほど強い)。配慮・男女は HARD_PEN(必須。下の「なるべく」がどれだけ積み重なっても
+   絶対に超えない大きさにしておく。1年ぶんの「なるべく」の点数は数十万に達することがあるため、
+   必須ラインは10億にしてはっきり区別する)。以下は「なるべく」の減点:
+   直近◯回に座った席 > 隣・号車の仲間になったことのある人 > 縦2行以上動く > 号車をかえる > 今の席から遠く */
+const HARD_PEN=1e9;
 const SAME_SEAT_PEN=5000; // 直近◯回のあいだに座った席にまた座る子1人あたり(男女の次に強い)
 const HIST_UNIT=400;      // 隣になったことのある2人1組あたり(直近◯回は1回ぶん=400、それより前の記録は下の HIST_OLD 倍)
 const HIST_OLD=0.12;      // 直近◯回より前の記録の重み(回数の偏りをならすための弱い減点。重くしすぎると他のルールが働かなくなる)
+/* 号車の仲間ペアは、隣の1組ぶんとまったく同じ重みでよい(実測で確認済み:重みを強めても、3つの号車に
+   12人ずつという構造上どうしても発生する「重複」(理論上 約27%)から下げられず、他のルールを悪化させるだけだった) */
 const ROW_PEN=450;        // 前の席から縦に2行以上動かなかった子1人あたり
+const COL_PEN=450;        // 前の席とおなじ列(横)のままだった子1人あたり(「縦だけ動いて横は同じ列」を防ぐ)
 const CAR_PEN=200;        // 前と同じ号車に残った子1人あたり(いちばん弱い。指定席などで同じになっても仕方ない)
 const ANNEAL_ITER=100000, ANNEAL_T0=300; // 席決めの探索回数と、最初の「ゆらぎ」の大きさ(後半ほど小さくして落ち着かせる)
 /* 実測(36人・6×6・3号車・指定席2・男女席4・年35回のシミュレーション)での目安:
@@ -877,7 +883,7 @@ rulesAdd:['はなす ペアを ついか','離すペアを追加'],and:['と','�
 ctAdj:['となりに しない(まわり1マス)','隣にしない(周囲1マス)'],ctDist:['きょりを してい','距離を指定'],
 vgap:['たてに','縦に'],hgap:['よこに','横に'],gapHint:['人ぶんより ちかくに しない','人分より近くにしない'],
 histRule:['まえに すわった せき・となりだった こ','以前の席・隣だった子'],
-histRuleTxt:['さいきん','直近'],histRuleTxt2:['回の せきがえで すわった せきには、もう すわらない。また、となりだった こ とは とくに つよく さける。それより まえの きろくも、となりに なった かいすうが すくない ひとを ゆうせんする','回の席替えで座った席には、もう座らないようにします。隣だった子とは特に強く避けます。それより前の記録も、隣になった回数が少ない人を優先します'],
+histRuleTxt:['さいきん','直近'],histRuleTxt2:['回の せきがえで すわった せきには、もう すわらない。また、となりだった こ・おなじ ごうしゃだった こ とは とくに つよく さける。それより まえの きろくも、かいすうが すくない ひとを ゆうせんする','回の席替えで座った席には、もう座らないようにします。隣だった子・同じ号車だった子とは特に強く避けます。それより前の記録も、回数が少ない人を優先します'],
 histRuleHint:['※「ぜったい」ではなく「なるべく」です。せんせいの せっていと だんじょの せきが さいゆうせん。0にすると この ルールは ぜんぶ オフ。','※「絶対」ではなく「なるべく」です。先生の配慮設定・男女席が最優先。0にするとこのルール(同じ席・隣の履歴)は全部オフになります。'],
 shufH:['せきがえ','席替え'],shufD:['じゅんびが できたら、ボタンを おしてね!','準備ができたら、ボタンを押してください。'],
 scope:['はんい:','範囲:'],scopeAll:['クラス ぜんいん','クラス全員'],scopeTeam:['はんの なかだけ','班の中だけ'],
@@ -1515,6 +1521,32 @@ function histNeighborWeights(){
   });
   return w;
 }
+/* 号車の「同じ仲間」を避けるための重み。前に同じ号車だった2人が、また同じ号車にならないようにする。
+   「隣になった回数」とまったく同じしくみ(直近◯回は強く、それより前は弱く)で、同じ点数表に足しこむ。
+   号車ルールがオフ(S.carRule===false)のときは働かない。 */
+function carmateWeights(){
+  const w={};
+  const D=S.histDepth;
+  if(!D||S.carRule===false)return w;
+  const H=S.history;
+  H.forEach((h,i)=>{
+    const age=H.length-1-i;
+    const weight=(age<D?1:HIST_OLD)*HIST_UNIT;
+    const byCar={};
+    for(const sid in (h.pos||{})){
+      const p=h.pos[sid];const so=(h.seats&&h.seats[key(p[0],p[1])])||{};
+      if(so.off||!so.car)continue;
+      (byCar[so.car]=byCar[so.car]||[]).push(sid);
+    }
+    Object.values(byCar).forEach(group=>{
+      for(let x=0;x<group.length;x++)for(let y=x+1;y<group.length;y++){
+        const kk=group[x]<group[y]?group[x]+'|'+group[y]:group[y]+'|'+group[x];
+        w[kk]=(w[kk]||0)+weight;
+      }
+    });
+  });
+  return w;
+}
 function computeAssignment(scope){
   const keys=enabledSeats();
   const kids=S.students.slice();
@@ -1568,6 +1600,10 @@ function computeAssignment(scope){
   }
   // scoring
   const hw=histNeighborWeights();
+  if(scope!=='team'){
+    const cw=carmateWeights(); // 「隣になった回数」に「号車の仲間になった回数」も同じ表として足しこむ
+    for(const kk in cw)hw[kk]=(hw[kk]||0)+cw[kk];
+  }
   const cur=S.current?S.current.pos||{}:{};
   const consList=S.cons.filter(c=>stu(c.a)&&stu(c.b));
   const maxD=S.rows+S.cols;
@@ -1603,13 +1639,18 @@ function computeAssignment(scope){
     return out;
   }
   function sameSeatCount(A){return sameSeatList(A).length;}
-  // 前の席から縦に2行以上動く(後ろの席の子は前へ上がる)。全員シャッフルのときだけ。指定席の子と、そもそも2行動けない席の子は対象外
+  // 前の席から縦に2行以上動き、かつ列(横)も変わる(後ろの席の子は前へ上がる)。
+  // 全員シャッフルのときだけ。指定席の子、そもそも2行動けない席の子(縦)、列が1つしかない教室(横)は、それぞれ対象外。
+  // ※縦だけ動いて列が同じ、というのを防ぐためのルール(「2つ前にしかなっていない」という声を受けて追加)
   const rowRule=scope!=='team'&&Object.keys(cur).length>0;
   const canRow=r=>Math.max(r,S.rows-1-r)>=2;
+  const canCol=S.cols>1;
   function rowStayCount(A){
     let n=0;
-    for(let i=0;i<N;i++){const sid=A[i];if(!sid||locked[i])continue;const cp=cur[sid];if(!cp||!canRow(cp[0]))continue;
-      if(Math.abs(seatArr[i].r-cp[0])<=1)n++;}
+    for(let i=0;i<N;i++){const sid=A[i];if(!sid||locked[i])continue;const cp=cur[sid];if(!cp)continue;
+      const rowBad=canRow(cp[0])&&Math.abs(seatArr[i].r-cp[0])<=1;
+      const colBad=canCol&&seatArr[i].c===cp[1];
+      if(rowBad||colBad)n++;}
     return n;
   }
   /* ---- 席決めの探索(焼きなまし法) ----
@@ -1617,21 +1658,29 @@ function computeAssignment(scope){
      全員ぶんを計算し直さず、変わった部分だけを計算する(差分計算)。これで探索回数を大きく増やせる。 */
   const M=kids.length;
   const idxOfKid={};kids.forEach((kd,ix)=>{idxOfKid[kd.id]=ix;});
-  const nbrAll=seatArr.map((s,i)=>{const out=[];   // 席ごとの「となり(周囲1マス)」の席
-    for(let j=0;j<N;j++){if(j!==i&&Math.abs(s.r-seatArr[j].r)<=1&&Math.abs(s.c-seatArr[j].c)<=1)out.push(j);}
-    return out;});
+  // 号車ごとの席一覧(「同じ号車の仲間」を隣とみなして扱うため)
+  const carGroups={};
+  seatArr.forEach((s,i)=>{if(s.car)(carGroups[s.car]=carGroups[s.car]||[]).push(i);});
+  const nbrAll=seatArr.map((s,i)=>{
+    const set=new Set(); // 席ごとの「となり(周囲1マス)」+「同じ号車の席ぜんぶ」
+    for(let j=0;j<N;j++){if(j!==i&&Math.abs(s.r-seatArr[j].r)<=1&&Math.abs(s.c-seatArr[j].c)<=1)set.add(j);}
+    if(s.car&&carGroups[s.car]){for(const j of carGroups[s.car]){if(j!==i)set.add(j);}}
+    return Array.from(set);
+  });
   // 児童×席ごとの減点表 U[児童*N+席]:男女(必須)・直近に座った席・縦2行・号車・今の席からの遠さ
   const U=new Float64Array(M*N);
   for(let s=0;s<M;s++){
     const kd=kids[s],sid=kd.id,cp=cur[sid],rs=recentSeat[sid];
     const cpRowOk=rowRule&&cp&&canRow(cp[0]);
+    const cpColOk=rowRule&&cp&&canCol;
     for(let i=0;i<N;i++){
       const st=seatArr[i];let u=0;
-      if(st.g&&kd.g&&kd.g!==st.g)u+=1e6;
+      if(st.g&&kd.g&&kd.g!==st.g)u+=HARD_PEN;
       if(cp){const d=Math.abs(st.r-cp[0])+Math.abs(st.c-cp[1]);u+=Math.max(0,maxD-d)*2;}
       if(!locked[i]){
         if(useSeatRule&&rs&&rs.has(st.k))u+=SAME_SEAT_PEN;
         if(cpRowOk&&Math.abs(st.r-cp[0])<=1)u+=ROW_PEN;
+        if(cpColOk&&st.c===cp[1])u+=COL_PEN;
         if(useCar&&carOfCur[sid]&&st.car&&st.car===carOfCur[sid])u+=CAR_PEN;
       }
       U[s*N+i]=u;
@@ -1652,7 +1701,7 @@ function computeAssignment(scope){
   function consViol(list){
     let v=0;
     for(let q=0;q<list.length;q++){const c=consIdx[list[q]];const ia=posOf[c.a],ib=posOf[c.b];if(ia<0||ib<0)continue;
-      if(Math.abs(seatArr[ia].r-seatArr[ib].r)<c.vg&&Math.abs(seatArr[ia].c-seatArr[ib].c)<c.hg)v+=1e6;}
+      if(Math.abs(seatArr[ia].r-seatArr[ib].r)<c.vg&&Math.abs(seatArr[ia].c-seatArr[ib].c)<c.hg)v+=HARD_PEN;}
     return v;
   }
   // 席i・席jに関係する部分の点数(2人の減点+まわりの席との隣の履歴+離すペア)
@@ -1714,12 +1763,12 @@ function computeAssignment(scope){
     if(!best||r.sc<best.sc)best=r;
     // 十分よい配置(必須ルール違反なし・同じ席なし・全員2行以上動いた)が2回以上で得られたら終了。
     // 号車は「同じになっても仕方ない」ルールなので、終了条件には入れない(点数では考慮される)
-    if(best.sc<1e6&&(!useSeatRule||sameSeatCount(best.A)===0)&&(!rowRule||rowStayCount(best.A)===0)&&t>=1)break;
+    if(best.sc<HARD_PEN/2&&(!useSeatRule||sameSeatCount(best.A)===0)&&(!rowRule||rowStayCount(best.A)===0)&&t>=1)break;
   }
   const carStay=useCar?carStayCount(best.A):0;
   const sameSeatIds=useSeatRule?sameSeatList(best.A):[];
   const sameSeat=sameSeatIds.length;
-  const warn=best.sc>=1e6?(S.grade==='low'?'ぜんぶの やくそくは まもれなかったよ。せってい を みなおしてね':'すべての条件を満たす配置が見つかりませんでした(一部の条件が守られていない可能性があります)'):null;
+  const warn=best.sc>=HARD_PEN/2?(S.grade==='low'?'ぜんぶの やくそくは まもれなかったよ。せってい を みなおしてね':'すべての条件を満たす配置が見つかりませんでした(一部の条件が守られていない可能性があります)'):null;
   // build result maps
   const asg={},posMap={},numOf={};
   best.A.forEach((sid,i)=>{if(sid){asg[seatArr[i].k]=sid;posMap[sid]=[seatArr[i].r,seatArr[i].c];numOf[sid]=i+1;}});
