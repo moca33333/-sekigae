@@ -764,7 +764,7 @@ p.pd{margin:0 0 14px; color:var(--muted); font-size:13.5px;}
       </div>
     </details>
     </div>
-    <p class="hint" style="text-align:center;">せきがえ君 v3.1</p>
+    <p class="hint" style="text-align:center;">せきがえ君 v3.2</p>
   </section>
 </main>
 
@@ -812,7 +812,7 @@ const ANNEAL_ITER=100000, ANNEAL_T0=300; // 席決めの探索回数と、最初
 function defState(name){return {
   name:name||'クラス1',
   grade:'low', fx:'gara', snd:'fun', bgmOn:true, bgmStyle:'wakuwaku', scope:'all', histDepth:3, carRule:true,
-  students:[], rows:5, cols:6, seats:{}, cons:[], history:[], current:null
+  students:[], rows:5, cols:6, seats:{}, cons:[], history:[], current:null, kujiState:null
 };}
 let DB={active:null,classes:{}};
 let S=null;
@@ -848,7 +848,7 @@ function save(){try{localStorage.setItem(LS_KEY,JSON.stringify(DB));}catch(e){to
 function switchClass(id){
   if(!DB.classes[id])return;
   DB.active=id;S=DB.classes[id];
-  kuji=null;const ka=document.getElementById('kujiArea');if(ka)ka.style.display='none';
+  if(typeof restoreKujiState==='function')restoreKujiState(); // くじ引き途中のクラスなら、そのまま続きを表示する
   save();renderAll();updateSndBtn();
   if(typeof bgmApply==='function')bgmApply();
   if(typeof updateBgmBtn==='function')updateBgmBtn();
@@ -889,7 +889,7 @@ shufH:['せきがえ','席替え'],shufD:['じゅんびが できたら、ボタ
 scope:['はんい:','範囲:'],scopeAll:['クラス ぜんいん','クラス全員'],scopeTeam:['はんの なかだけ','班の中だけ'],
 fx:['えんしゅつ:','演出:'],fxPlain:['シンプル','シンプル'],
 btnBatch:['🎉 いっきに せきがえ!','🎉 一括で席替え'],btnKuji:['🎟 ひとりずつ くじびき','🎟 一人ずつくじ引き'],
-kujiHint:['じぶんの なまえを タップして、くじを ひこう!','自分の名前をタップして、くじを引こう!'],
+kujiHint:['じぶんの なまえを タップして、くじを ひこう!とちゅうで とじても、つづきから できるよ','自分の名前をタップして、くじを引こう!途中で閉じても、続きから再開できます'],
 btnReveal:['🥁 はっぴょう!','🥁 発表!'],cancel:['やめる','中止'],
 omakeH:['なんでも くじびき','なんでもくじ引き'],
 omakeD:['はっぴょうの じゅんばんきめ、かかりきめ など、いろいろ つかえる くじです。','発表の順番決め、係決めなど、いろいろ使えるくじです。'],
@@ -1868,11 +1868,28 @@ $('#btnKuji').addEventListener('click',()=>{
   const res=computeAssignment(S.scope);
   if(res.err){toast(res.err);return;}
   kuji={res:res,drawn:{}};
+  saveKujiState();
   $('#kujiArea').style.display='block';
   renderKuji();
   $('#kujiArea').scrollIntoView({behavior:'smooth'});
 });
-$('#btnKujiCancel').addEventListener('click',()=>{kuji=null;$('#kujiArea').style.display='none';});
+$('#btnKujiCancel').addEventListener('click',()=>{
+  kuji=null;S.kujiState=null;save();
+  $('#kujiArea').style.display='none';
+});
+/* くじ引きの途中経過(誰がもう引いたか)を端末に保存する。
+   朝休みに引いて、授業中に発表……のように時間が空いても、ページを開き直せば続きから再開できる。 */
+function saveKujiState(){S.kujiState=kuji;save();}
+function restoreKujiState(){
+  if(S.kujiState&&S.kujiState.res){
+    kuji=S.kujiState;
+    $('#kujiArea').style.display='block';
+    renderKuji();
+  }else{
+    kuji=null;
+    $('#kujiArea').style.display='none';
+  }
+}
 function renderKuji(){
   if(!kuji)return;
   const low=S.grade==='low';
@@ -1903,6 +1920,7 @@ function drawOne(st){
       const num=kuji.res.numOf[st.id];
       showResultNum(num+(low?'ばん':'番'),st.name+(low?' さん':' さん'));
       kuji.drawn[st.id]=num;
+      saveKujiState();
       renderKuji();
       stageBtn(low?'つぎの ひとへ →':'次の人へ →','green big',closeStage);
     });
@@ -1961,7 +1979,7 @@ function confirmAssign(res){
   try{entry.img=drawHist(entry,1200,900).toDataURL('image/jpeg',0.78);}catch(e){}
   S.history.push(entry);
   S.current={pos:res.pos};
-  kuji=null;$('#kujiArea').style.display='none';
+  kuji=null;S.kujiState=null;$('#kujiArea').style.display='none';
   saveWithImgFallback(entry);
   closeStage();renderAll();
   toast(S.grade==='low'?'けってい! きろくに のこしたよ📚':'決定!記録に保存しました📚');
@@ -2261,4 +2279,5 @@ function renderAll(){
 }
 renderAll();
 updateSndBtn();
+restoreKujiState(); // 前回くじ引きの途中でページを閉じていたら、続きから再開する
 </script>
